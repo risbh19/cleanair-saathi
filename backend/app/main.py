@@ -10,6 +10,7 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from .engine.indoor import RoomScenario, simulate
 from .brief import air_brief, load_csv
 from .services.forecast import HOUR, fetch_model, forecast
 
@@ -64,7 +65,7 @@ app = FastAPI(title="CleanAir Saathi", version="0.2.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=environ.get("CORS_ORIGINS", "http://localhost:5173").split(","),
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
 
@@ -115,3 +116,8 @@ def hourly_forecast(hours: int = Query(48, ge=1, le=48), context=Depends(cached_
     if result["available_hours"] == 0:
         raise HTTPException(503, "No forecast hours are available for this window")
     return {**metadata, "as_of": hour.isoformat(), **result}
+
+
+@app.post("/simulate/indoor")
+def indoor(room: RoomScenario):
+    return simulate(room)

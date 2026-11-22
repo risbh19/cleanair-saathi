@@ -61,3 +61,24 @@ Set `DATA_MODE=live` in the Compose .env and run `docker compose up -d` to use C
 Fixture mode uses a fixed reference hour and a separate synthetic 48-hour forecast for offline demos. Both modes use the same Delhi coverage and response fields.
 
 [Air-quality data and attribution: CAMS and Open-Meteo](https://open-meteo.com/en/docs/air-quality-api)
+
+
+## Indoor Air Lab API
+
+Open `POST /simulate/indoor` in [/docs](http://localhost:8000/docs) and try an eight-hour bedroom scenario.
+
+```json
+{
+  "floor_area_m2": 12,
+  "ceiling_height_m": 2.7,
+  "windows": "closed",
+  "purifier_cadr_m3_h": 300,
+  "outdoor_pm25_ug_m3": [220, 220, 220, 220, 220, 220, 220, 220]
+}
+```
+
+Each entry supplies the outdoor concentration for one hour. The selected scenario and the closed-window, purifier-off baseline use the same room and outdoor series. In this example the estimated inhaled mass is about 39 µg with the purifier and 438 µg at baseline. A negative avoided dose means the selected scenario increased exposure. A zero baseline yields a null percentage.
+
+The model assumes a well-mixed room at equilibrium in each hour and excludes indoor sources such as cooking. Penetration, deposition, air exchange, breathing rate and the sizing target are editable scenario assumptions. The response includes them so a client can show how each estimate was calculated. The sizing output multiplies room volume by the selected clean-air changes per hour. This endpoint works offline in both data modes.
+
+[US EPA APEX model documentation, section 8.2.2](https://www.epa.gov/system/files/documents/2023-08/APEX52_UsersGuide_Vol2_June2023.pdf)
