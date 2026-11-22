@@ -40,6 +40,15 @@ class ApiTests(unittest.TestCase):
         for route in ["/air/now", "/air/forecast"]:
             self.assertEqual(self.client.get(route).status_code, 503)
 
+    def test_indoor_scenario_and_browser_preflight(self):
+        payload = {"outdoor_pm25_ug_m3": [100], "floor_area_m2": 15, "ceiling_height_m": 3}
+        response = self.client.post("/simulate/indoor", json=payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["room_volume_m3"], 45)
+        self.assertEqual(self.client.post("/simulate/indoor", json={}).status_code, 422)
+        headers = {"Origin": "http://localhost:5173", "Access-Control-Request-Method": "POST"}
+        self.assertEqual(self.client.options("/simulate/indoor", headers=headers).status_code, 200)
+
     def test_health(self):
         self.assertEqual(self.client.get("/health").json()["status"], "ok")
 
