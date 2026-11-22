@@ -21,6 +21,22 @@ jobs:
       - run: POSTGRES_PASSWORD=ci-test-password docker compose up --build --wait
       - run: curl --fail http://localhost:8000/health
       - run: curl --fail 'http://localhost:8000/air/now?lat=28.61&lon=77.21'
+      - name: Probe the live Delhi feed
+        continue-on-error: true
+        run: |
+          DATA_MODE=live python -m uvicorn backend.app.main:app --port 8001 > /tmp/delhi-feed.log 2>&1 &
+          server=$!
+          trap 'kill "$server" || true' EXIT
+          curl -fsS --retry 12 --retry-all-errors --retry-delay 2 --max-time 5 \
+            http://127.0.0.1:8001/air/forecast > /tmp/delhi-forecast.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("/tmp/delhi-forecast.json").read_text())
+          assert data["data_mode"] == "live" and data["available_hours"] == 48
+          assert data["stale"] is False
+          print("CAMS download at", data["fetched_at"], "provided 48 hourly estimates")
+          PY
       - if: always()
         run: docker compose logs
         env:
