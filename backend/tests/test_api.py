@@ -26,6 +26,20 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(body["hourly_subindex_estimate"]["value"], 323)
         self.assertEqual(body["valid_hours"], 24)
 
+    def test_forecast_from_fixed_demo_hour(self):
+        body = self.client.get("/air/forecast").json()
+        self.assertEqual(body["available_hours"], 48)
+        self.assertEqual(body["hours"][0]["timestamp"], "2025-11-02T00:00:00+00:00")
+        self.assertEqual(body["hours"][-1]["timestamp"], "2025-11-03T23:00:00+00:00")
+        self.assertEqual(body["data_mode"], "fixture")
+        self.assertEqual(self.client.get("/air/forecast?hours=49").status_code, 422)
+
+    def test_empty_live_cache_returns_503(self):
+        app.state.mode = "live"
+        app.state.snapshot = None
+        for route in ["/air/now", "/air/forecast"]:
+            self.assertEqual(self.client.get(route).status_code, 503)
+
     def test_health(self):
         self.assertEqual(self.client.get("/health").json()["status"], "ok")
 
@@ -43,7 +57,7 @@ class ApiTests(unittest.TestCase):
 
 class ConfigurationTests(unittest.TestCase):
     def test_unsupported_mode_fails_startup(self):
-        with patch.dict(environ, {"DATA_MODE": "live"}):
+        with patch.dict(environ, {"DATA_MODE": "typo"}):
             with self.assertRaises(RuntimeError):
                 with TestClient(app):
                     pass

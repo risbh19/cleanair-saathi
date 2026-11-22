@@ -6,7 +6,7 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     environment:
-      DATA_MODE: fixture
+      DATA_MODE: ${DATA_MODE:-fixture}
       CORS_ORIGINS: http://localhost:5173
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]

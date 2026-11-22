@@ -1,6 +1,6 @@
 # CleanAir Saathi
 
-CleanAir Saathi is a household air-quality planner for Delhi-NCR. This first milestone provides a tested PM2.5 engine and a FastAPI air brief backed by a clearly labelled synthetic Delhi series.
+CleanAir Saathi is a household air-quality planner for Delhi-NCR. The FastAPI service serves Delhi PM2.5 estimates and forecasts from a synthetic fixture or the CAMS regional model.
 
 ## Run locally
 
@@ -52,6 +52,12 @@ A 24-hour estimate requires at least 16 distinct valid hourly slots. The officia
 
 To supply your own single-location series to the CLI, create a CSV with columns `timestamp,pm25_ug_m3`. Each timestamp must have an explicit UTC offset and lie on a UTC hour boundary. Omit missing hours. Duplicate hours, negative concentrations and non-finite values cause an error. Pass `--as-of` with an offset-aware hour to choose the reporting window. The default uses the latest hour in the file.
 
-## Build status
+## Delhi forecast and live data
 
-The air brief, health endpoint, source metadata, input validation, CORS allow-list and database startup setup are implemented. Live ingestion, forecast endpoints, household persistence, daily plans, Indoor Lab, Ask Saathi, community digest and the React interface remain in the build plan. `DATA_MODE` currently accepts `fixture`. Enabling another mode fails startup with a clear error.
+`GET /air/forecast?hours=48` returns the next 1–48 hourly slots in UTC. It includes the earliest lowest and highest available PM2.5 hours. Missing slots have null values and are excluded from the ranking. These hours compare pollution within the requested window.
+
+Set `DATA_MODE=live` in the Compose .env and run `docker compose up -d` to use CAMS via Open-Meteo. For a native run, set the environment variable before starting Uvicorn. The worker fetches the Delhi cell at startup and hourly thereafter. Data requests read the latest in-process snapshot. A failed refresh retains the prior snapshot and retries after five minutes. An empty cache or exhausted forecast window returns HTTP 503. Restarting clears the live cache. After three hours the API flags the cached download as stale. The model estimates regional concentrations, including for the current hour. Station observations and weather are pending.
+
+Fixture mode uses a fixed reference hour and a separate synthetic 48-hour forecast for offline demos. Both modes use the same Delhi coverage and response fields.
+
+[Air-quality data and attribution: CAMS and Open-Meteo](https://open-meteo.com/en/docs/air-quality-api)
