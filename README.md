@@ -113,3 +113,9 @@ Open `/docs`, select **Authorize**, enter the UUID, then try the following reque
 ```
 
 For a native API run, set `DATABASE_URL` to your PostgreSQL connection string and run `python -m backend.db.migrate` before starting Uvicorn. Compose supplies the database settings and runs migrations automatically. To run the database integration tests, point `TEST_DATABASE_URL` at a disposable database and run `python -m unittest backend.tests.test_households -v`. Fixture air routes can run without a database.
+
+## Delhi weather forecast
+
+`GET /weather/forecast?hours=48` returns the next 1–48 UTC hours for the Delhi cell. Today displays the selected forecast hour in IST, with temperature (°C), relative humidity (%), 10-metre wind speed (m/s) and boundary-layer height (m). A missing field stays null. An hour counts as available when it contains at least one value.
+
+Fixture mode uses a synthetic hourly series aligned with the air forecast. Live mode refreshes the [Open-Meteo Weather Forecast](https://open-meteo.com/en/docs) independently of CAMS, retries failed downloads after five minutes and marks a retained snapshot stale after three hours. When no usable weather hours remain the weather route returns 503. Responses include the source, mode, reference hour and live fetch timestamp. Weather data attribution and usage terms are available from [Open-Meteo](https://open-meteo.com/en/terms).
