@@ -1,0 +1,202 @@
+[
+  {
+    "id": "move_activity_indoors",
+    "requires": [
+      "high"
+    ],
+    "en": {
+      "title": "Move strenuous activity indoors",
+      "step": "If outdoor exercise was planned, choose an indoor activity today."
+    },
+    "hi": {
+      "title": "मेहनत वाली गतिविधि घर के अंदर करें",
+      "step": "अगर बाहर व्यायाम करने का इरादा था, तो आज घर के अंदर कोई गतिविधि चुनें।"
+    }
+  },
+  {
+    "id": "review_sensitive_member_trip",
+    "requires": [
+      "sensitive",
+      "high"
+    ],
+    "en": {
+      "title": "Review essential trips together",
+      "step": "Check the air brief before a sensitive household member goes out. Postpone optional trips if possible."
+    },
+    "hi": {
+      "title": "ज़रूरी सफ़र पर साथ में विचार करें",
+      "step": "संवेदनशील सदस्य के बाहर जाने से पहले हवा की जानकारी देखें। हो सके तो गैरज़रूरी सफ़र टालें।"
+    }
+  },
+  {
+    "id": "skip_biomass",
+    "requires": [
+      "biomass"
+    ],
+    "en": {
+      "title": "Check for a cleaner cooking option",
+      "step": "If LPG or electric cooking is already available, use it in place of wood or other solid fuel."
+    },
+    "hi": {
+      "title": "खाना पकाने का साफ़ विकल्प देखें",
+      "step": "अगर एलपीजी या बिजली का चूल्हा पहले से उपलब्ध है, तो लकड़ी या दूसरे ठोस ईंधन की जगह उसका उपयोग करें।"
+    }
+  },
+  {
+    "id": "check_purifier",
+    "requires": [
+      "purifier"
+    ],
+    "en": {
+      "title": "Check the room purifier",
+      "step": "Check the filter indicator and follow the manufacturer’s maintenance instructions."
+    },
+    "hi": {
+      "title": "कमरे का प्यूरिफ़ायर जाँचें",
+      "step": "फ़िल्टर का संकेतक देखें और देखभाल के लिए निर्माता के निर्देश पढ़ें।"
+    }
+  },
+  {
+    "id": "compare_motor_trip",
+    "requires": [
+      "motor"
+    ],
+    "en": {
+      "title": "Compare a public transport route",
+      "step": "Check whether a bus or metro can replace one planned car or two-wheeler trip."
+    },
+    "hi": {
+      "title": "सार्वजनिक परिवहन का रास्ता देखें",
+      "step": "देखें कि कार या दोपहिया के किसी एक सफ़र के लिए बस या मेट्रो उपलब्ध है या नहीं।"
+    }
+  },
+  {
+    "id": "review_school_trip",
+    "requires": [
+      "child",
+      "high"
+    ],
+    "en": {
+      "title": "Review the school journey",
+      "step": "Check the school’s travel and outdoor activity updates before leaving."
+    },
+    "hi": {
+      "title": "स्कूल के सफ़र की योजना देखें",
+      "step": "निकलने से पहले स्कूल की यात्रा और बाहरी गतिविधियों से जुड़े ताज़ा निर्देश देखें।"
+    }
+  },
+  {
+    "id": "avoid_roadside_wait",
+    "requires": [
+      "commute"
+    ],
+    "en": {
+      "title": "Choose where to wait",
+      "step": "Where practical, wait away from idling vehicles and busy traffic."
+    },
+    "hi": {
+      "title": "इंतज़ार की जगह चुनें",
+      "step": "जहाँ संभव हो, चालू इंजन वाले वाहनों और भारी यातायात से दूर इंतज़ार करें।"
+    }
+  },
+  {
+    "id": "combine_errands",
+    "requires": [
+      "motor"
+    ],
+    "en": {
+      "title": "Combine nearby errands",
+      "step": "Check which stops can be covered on the same trip."
+    },
+    "hi": {
+      "title": "आसपास के काम एक सफ़र में करें",
+      "step": "देखें कि एक ही सफ़र में किन जगहों के काम पूरे हो सकते हैं।"
+    }
+  },
+  {
+    "id": "compare_room_settings",
+    "requires": [
+      "purifier"
+    ],
+    "en": {
+      "title": "Compare purifier settings in Indoor Lab",
+      "step": "Use your saved room size to compare an unfiltered room with your purifier’s CADR."
+    },
+    "hi": {
+      "title": "घर की हवा की लैब में सेटिंग की तुलना करें",
+      "step": "अपने कमरे के आकार से बिना फ़िल्टर और प्यूरिफ़ायर वाले विकल्प की तुलना करें।"
+    }
+  },
+  {
+    "id": "check_cooking_vent",
+    "requires": [],
+    "en": {
+      "title": "Use the kitchen exhaust if available",
+      "step": "Use an exhaust hood that vents outdoors while cooking, if your kitchen has one."
+    },
+    "hi": {
+      "title": "उपलब्ध हो तो रसोई का एग्ज़ॉस्ट चलाएँ",
+      "step": "अगर रसोई में धुआँ बाहर निकालने वाली चिमनी है, तो खाना पकाते समय उसे चलाएँ।"
+    }
+  },
+  {
+    "id": "wet_mop",
+    "requires": [],
+    "en": {
+      "title": "Damp-mop the floor",
+      "step": "Use a damp mop when cleaning dusty floors."
+    },
+    "hi": {
+      "title": "गीला पोछा लगाएँ",
+      "step": "धूल भरे फ़र्श को साफ़ करने के लिए गीले पोछे का उपयोग करें।"
+    }
+  },
+  {
+    "id": "avoid_incense",
+    "requires": [],
+    "en": {
+      "title": "Skip indoor incense and coils",
+      "step": "Leave incense sticks and mosquito coils unlit in enclosed rooms."
+    },
+    "hi": {
+      "title": "घर में अगरबत्ती और कॉइल जलाने से बचें",
+      "step": "बंद कमरों में अगरबत्ती और मच्छर भगाने वाली कॉइल न जलाएँ।"
+    }
+  },
+  {
+    "id": "avoid_waste_burning",
+    "requires": [],
+    "en": {
+      "title": "Set aside waste for collection",
+      "step": "Put leaves and rubbish out for collection instead of burning them."
+    },
+    "hi": {
+      "title": "कचरा उठाने के लिए अलग रखें",
+      "step": "पत्तों और कचरे को जलाने के बजाय संग्रह के लिए अलग रखें।"
+    }
+  },
+  {
+    "id": "review_air_brief",
+    "requires": [],
+    "en": {
+      "title": "Check the source before going out",
+      "step": "Read the PM2.5 timestamp and check whether the reading comes from a station or a regional model."
+    },
+    "hi": {
+      "title": "बाहर जाने से पहले डेटा का स्रोत देखें",
+      "step": "PM2.5 का समय देखें और जाँचें कि रीडिंग स्टेशन की है या क्षेत्रीय मॉडल की।"
+    }
+  },
+  {
+    "id": "check_next_hours",
+    "requires": [],
+    "en": {
+      "title": "Review the next few hours",
+      "step": "Open the hourly forecast and check the entries for your planned travel time."
+    },
+    "hi": {
+      "title": "अगले कुछ घंटों का अनुमान देखें",
+      "step": "घंटेवार पूर्वानुमान खोलें और अपने सफ़र के समय का अनुमान देखें।"
+    }
+  }
+]

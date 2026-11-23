@@ -10,7 +10,7 @@ const bands = {
   Severe: "गंभीर",
 };
 
-function useAir(path) {
+function useAir(path, headers) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(false);
   const [attempt, retry] = useState(0);
@@ -18,13 +18,13 @@ function useAir(path) {
     const controller = new AbortController();
     setData(null);
     setError(false);
-    api(path, { signal: controller.signal })
+    api(path, { headers, signal: controller.signal })
       .then(setData)
       .catch((e) => {
         if (e.name !== "AbortError") setError(true);
       });
     return () => controller.abort();
-  }, [path, attempt]);
+  }, [path, attempt, headers]);
   return { data, error, retry: () => retry((n) => n + 1) };
 }
 
@@ -75,7 +75,7 @@ function Source({ data }) {
   );
 }
 
-export default function Today({ profile, openProfile }) {
+export default function Today({ profile, openProfile, headers }) {
   const t = useText(),
     lang = useContext(Language);
   const now = useAir(
@@ -215,6 +215,7 @@ export default function Today({ profile, openProfile }) {
           </p>
         )}
       </section>
+      {profile && <DailyPlan headers={headers} />}
       {n && (
         <section className="panel">
           <h2>{t("24-hour average", "24 घंटे का औसत")}</h2>
@@ -372,5 +373,44 @@ function WeatherHour({ rows, format, lang }) {
         ))}
       </dl>
     </>
+  );
+}
+
+function DailyPlan({ headers }) {
+  const plan = useAir("/plan/today", headers);
+  const lang = useContext(Language),
+    t = useText();
+  return (
+    <section className="panel">
+      <h2>{t("Household action plan", "परिवार की कार्ययोजना")}</h2>
+      {!plan.data ? (
+        <Status request={plan} />
+      ) : (
+        <>
+          <p>
+            {plan.data.band_used
+              ? t("PM2.5 band used", "चयन में उपयोग की गई PM2.5 श्रेणी") +
+                " · " +
+                t(plan.data.band_used, bands[plan.data.band_used])
+              : t(
+                  "Based on your household profile. A fresh air reading is unavailable.",
+                  "यह योजना आपके परिवार की जानकारी पर आधारित है। ताज़ा रीडिंग उपलब्ध नहीं है।",
+                )}
+            {plan.data.data_mode === "fixture" &&
+              " · " + t("Synthetic demo", "कृत्रिम डेमो")}
+            {plan.data.data_mode === "replay" &&
+              " · " + t("Winter replay", "सर्दियों का रीप्ले")}
+          </p>
+          <ol>
+            {plan.data.actions.map((action) => (
+              <li key={action.id}>
+                <strong>{action[lang].title}</strong>
+                <p>{action[lang].step}</p>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+    </section>
   );
 }
