@@ -1,0 +1,14 @@
+{
+  "retrieved_on_utc": "2026-11-23",
+  "as_of": "2025-01-10T23:00:00+00:00",
+  "air": {
+    "source": "Archived CAMS via Open-Meteo",
+    "url": "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=28.61&longitude=77.21&start_date=2025-01-06&end_date=2025-01-12&hourly=pm2_5&timeformat=unixtime&timezone=GMT",
+    "sha256": "d893c229defdc7af765c56283ef660d57017f48cb5311cb0099a483e76b0b3d1"
+  },
+  "weather": {
+    "source": "Open-Meteo Historical Forecast Archive",
+    "url": "https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=28.61&longitude=77.21&start_date=2025-01-06&end_date=2025-01-12&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,boundary_layer_height&wind_speed_unit=ms&timeformat=unixtime&timezone=GMT",
+    "sha256": "af9865c995c73d4ab9385552c25e34a8ec3f1af75eba173d6c670a66b1eb1ea6"
+  }
+}

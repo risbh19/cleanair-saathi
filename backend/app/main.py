@@ -19,7 +19,7 @@ from .services.stations import refresh_stations, station_summary
 from .services.weather import fetch_weather, parse_weather, weather_window
 from .engine.indoor import RoomScenario, simulate
 from .brief import air_brief, load_csv
-from .services.forecast import HOUR, fetch_model, forecast
+from .services.forecast import HOUR, fetch_model, forecast, parse_model
 
 FIXTURE = Path(__file__).resolve().parents[1] / "data/fixtures/synthetic_day.csv"
 SOURCE_URL = "https://ies.gov.in/arthapedia/concept/national-air-quality-index"
@@ -64,6 +64,15 @@ async def lifespan(app: FastAPI):
         weather = parse_weather(json.loads(FIXTURE.with_name("synthetic_weather.json").read_text(encoding="utf-8")))
         app.state.weather = (weather, end)
         yield
+    elif mode == "replay":
+        folder = FIXTURE.parent / "delhi-winter-2025"
+        def read(name):
+            return json.loads((folder / name).read_text(encoding="utf-8"))
+        app.state.archive = read("manifest.json")
+        reference = datetime.fromisoformat(app.state.archive["as_of"])
+        app.state.snapshot = (parse_model(read("air.json")), reference)
+        app.state.weather = (parse_weather(read("weather.json")), reference)
+        yield
     elif mode == "live":
         tasks = [asyncio.create_task(refresh(app)), asyncio.create_task(refresh(app, weather=True))]
         if key := environ.get("OPENAQ_API_KEY"):
@@ -75,7 +84,7 @@ async def lifespan(app: FastAPI):
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
     else:
-        raise RuntimeError("DATA_MODE must be fixture or live")
+        raise RuntimeError("DATA_MODE must be fixture, replay or live")
 
 
 app = FastAPI(title="CleanAir Saathi", version="0.2.0", lifespan=lifespan)
@@ -108,7 +117,7 @@ def cached_air(request: Request):
     series, fetched = snapshot
     demo = request.app.state.mode == "fixture"
     now = utc_now()
-    hour = fetched if demo else now.replace(minute=0, second=0, microsecond=0)
+    hour = fetched if request.app.state.mode != "live" else now.replace(minute=0, second=0, microsecond=0)
     metadata = {
         "source": "Synthetic demonstration series" if demo else "CAMS via Open-Meteo (regional model)",
         "source_url": None if demo else "https://open-meteo.com/en/docs/air-quality-api",
@@ -118,6 +127,10 @@ def cached_air(request: Request):
         "stale": now - fetched >= 3 * HOUR,
         "methodology_url": SOURCE_URL,
     }
+    if request.app.state.mode == "replay":
+        archive = request.app.state.archive
+        metadata.update(source=archive["air"]["source"], source_url=archive["air"]["url"],
+                        retrieved_on_utc=archive["retrieved_on_utc"], fetched_at=None)
     return series, hour, metadata, now
 
 
@@ -177,12 +190,17 @@ def hourly_weather(request: Request, hours: int = Query(48, ge=1, le=48)):
     series, fetched = snapshot
     fixture = request.app.state.mode == "fixture"
     now = utc_now()
-    hour = fetched if fixture else now.replace(minute=0, second=0, microsecond=0)
+    hour = fetched if request.app.state.mode != "live" else now.replace(minute=0, second=0, microsecond=0)
     result = weather_window(series, hour + HOUR, hours)
     if not result["available_hours"]:
         raise HTTPException(503, "No weather forecast hours available")
-    return {**result, "as_of": hour.isoformat(), "data_mode": request.app.state.mode,
+    response = {**result, "as_of": hour.isoformat(), "data_mode": request.app.state.mode,
             "location": {"lat": 28.61, "lon": 77.21, "locality": "Delhi"},
             "source": "Synthetic demonstration series" if fixture else "Open-Meteo Weather Forecast",
             "source_url": None if fixture else "https://open-meteo.com/en/docs",
             "fetched_at": None if fixture else fetched.isoformat(), "stale": now - fetched >= 3 * HOUR}
+    if request.app.state.mode == "replay":
+        archive = request.app.state.archive
+        response.update(source=archive["weather"]["source"], source_url=archive["weather"]["url"],
+                        retrieved_on_utc=archive["retrieved_on_utc"], fetched_at=None)
+    return response
