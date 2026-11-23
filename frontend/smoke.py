@@ -38,5 +38,18 @@ with sync_playwright() as playwright:
     page.get_by_role("button", name="परिवार मिटाएँ").click()
     page.get_by_role("button", name="मिटाने की पुष्टि करें").click()
     expect(page.get_by_role("button", name="परिवार जोड़ें")).to_be_visible()
+    # Exercise station attribution without an OpenAQ account in CI.
+    def station_brief(route):
+        data = route.fetch().json()
+        data.update(data_mode="live", stale=False, hourly_pm25_ug_m3=42, age_hours=1,
+                    hourly_subindex_estimate={"band": "Satisfactory", "value": 70},
+                    stations=[{"location_id": 123, "name": "Test monitor", "provider": "Test provider",
+                               "as_of": data["as_of"], "distance_km": 2, "pm25_ug_m3": 42,
+                               "url": "https://explore.openaq.org/locations/123"}])
+        route.fulfill(json=data)
+    page.route("**/api/air/now*", station_brief)
+    page.reload()
+    page.get_by_text("शामिल स्टेशन", exact=False).click()
+    expect(page.get_by_role("link", name="Test monitor")).to_be_visible()
     assert not errors, errors
     browser.close()

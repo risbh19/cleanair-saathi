@@ -17,6 +17,7 @@ services:
       PGDATABASE: cleanair
       PGUSER: cleanair
       PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      OPENAQ_API_KEY: ${OPENAQ_API_KEY:-}
       DATA_MODE: ${DATA_MODE:-fixture}
       CORS_ORIGINS: http://localhost:5173
     depends_on:

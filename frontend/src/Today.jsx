@@ -47,7 +47,15 @@ function Source({ data }) {
     <p className="source">
       {data.data_mode === "fixture"
         ? t("Demo · Synthetic Delhi data", "डेमो · दिल्ली का कृत्रिम डेटा")
-        : t("Live mode · CAMS via Open-Meteo", "लाइव मोड · Open-Meteo से CAMS")}
+        : data.stations?.length
+          ? t(
+              "OpenAQ · Nearby station median",
+              "OpenAQ · नज़दीकी स्टेशनों की माध्यिका",
+            )
+          : t(
+              "Live mode · CAMS via Open-Meteo",
+              "लाइव मोड · Open-Meteo से CAMS",
+            )}
       {" · "}
       {timeLabel(data.as_of, lang)} IST
       {data.stale && " · " + t("Older data", "पुराना डेटा")}
@@ -64,7 +72,9 @@ function Source({ data }) {
 export default function Today({ profile, openProfile }) {
   const t = useText(),
     lang = useContext(Language);
-  const now = useAir("/air/now"),
+  const now = useAir(
+      profile ? `/air/now?lat=${profile.lat}&lon=${profile.lon}` : "/air/now",
+    ),
     forecast = useAir("/air/forecast?hours=48"),
     weather = useAir("/weather/forecast?hours=48");
   const band = (b) => (b ? t(b, bands[b] || b) : "—");
@@ -99,10 +109,35 @@ export default function Today({ profile, openProfile }) {
             </div>
             <strong>{band(n.hourly_subindex_estimate?.band)}</strong>
             <p>
-              {t("Hourly PM2.5 sub-index", "घंटे का PM2.5 उप-सूचकांक")} ·{" "}
-              {format(n.hourly_subindex_estimate?.value)}
+              {n.stations?.length
+                ? t(
+                    "Station PM2.5 sub-index estimate",
+                    "स्टेशन PM2.5 उप-सूचकांक का अनुमान",
+                  )
+                : t("Hourly PM2.5 sub-index", "घंटे का PM2.5 उप-सूचकांक")}{" "}
+              · {format(n.hourly_subindex_estimate?.value)}
             </p>
             <Source data={n} />
+            {n.stations?.length > 0 && (
+              <details>
+                <summary>
+                  {t("Contributing stations", "शामिल स्टेशन")} (
+                  {n.stations.length})
+                </summary>
+                <ul>
+                  {n.stations.map((s) => (
+                    <li key={s.location_id}>
+                      <a style={{ color: "inherit" }} href={s.url}>
+                        {s.name}
+                      </a>{" "}
+                      · {s.provider} · {format(s.distance_km)} km ·{" "}
+                      {format(s.pm25_ug_m3)} µg/m³ · {timeLabel(s.as_of, lang)}{" "}
+                      IST
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </>
         )}
       </section>
@@ -115,6 +150,12 @@ export default function Today({ profile, openProfile }) {
             {t("PM2.5 sub-index", "PM2.5 उप-सूचकांक")}{" "}
             {format(n.pm25_subindex_24h?.value)}
           </p>
+          {n.average_as_of && n.data_mode === "live" && (
+            <p className="source">
+              CAMS · Open-Meteo · {timeLabel(n.average_as_of, lang)} IST
+              {n.average_stale && " · " + t("Older data", "पुराना डेटा")}
+            </p>
+          )}
           <small>
             {n.valid_hours}/24 {t("hours available", "घंटों का डेटा उपलब्ध")}
           </small>
