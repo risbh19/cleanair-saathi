@@ -127,3 +127,11 @@ In live mode, set `OPENAQ_API_KEY` in the backend environment or local Compose `
 `GET /air/now?lat=28.61&lon=77.21` selects up to three nearest reporting stations with readings less than three hours old. It uses one reading per station and returns their median in µg/m³. The current timestamp and age describe the oldest contributor. The response lists each station, original provider, timestamp, concentration, distance and OpenAQ location link. The PM2.5 sub-index is an estimate from this median. The dashboard uses the saved household coordinates when available.
 
 When station readings expire, current conditions fall back to CAMS with its timestamp and stale flag. The 24-hour component and forecast use the regional model independently. A fresh station result can still be served while the model is unavailable, in which case the 24-hour fields are empty. Fixture mode remains synthetic. See the [OpenAQ terms of use](https://docs.openaq.org/about/terms) and original providers’ licensing information when reusing observations.
+
+## Delhi-NCR GRAP orders
+
+Today reads `GET /grap/status`. It shows the most recent recorded CAQM order whose effective time has arrived, in both fixture and live air modes. An empty database returns `{"order": null}`. Stage 0 means an entered order explicitly leaves no stage active. GRAP records are maintained by an operator independently of the pollution readings.
+
+To record an order, configure a strong random `GRAP_ADMIN_TOKEN` in the backend environment and recreate the backend service. In the local API docs, authorize the admin request with that bearer token and call `PUT /admin/grap-status`. Supply the highest stage still in effect after the order (integer 0–4), `effective_from` with its UTC offset, and `source_url` pointing to the official HTTPS order PDF on caqm.nic.in. Verify the document and effective time before entering them. Use HTTPS for remote administration. The dashboard only uses the public read route.
+
+A future order takes effect at its specified time. Repeating the same entry preserves its recorded timestamp. Submitting corrected details for the same effective time replaces that entry. Older orders remain stored. The admin route is disabled until its token is configured.

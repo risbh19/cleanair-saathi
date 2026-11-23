@@ -11,6 +11,7 @@ with sync_playwright() as playwright:
     page.on("pageerror", lambda exc: errors.append(str(exc)))
     page.goto(os.getenv("UI_URL", "http://127.0.0.1:5173"))
     expect(page.get_by_text("Very poor", exact=True).first).to_be_visible()
+    expect(page.get_by_text("No effective CAQM order has been recorded.")).to_be_visible()
     weather_hour = page.get_by_label("Forecast hour")
     expect(weather_hour.locator("option")).to_have_count(48)
     weather_hour.select_option(index=47)
@@ -47,9 +48,14 @@ with sync_playwright() as playwright:
                                "as_of": data["as_of"], "distance_km": 2, "pm25_ug_m3": 42,
                                "url": "https://explore.openaq.org/locations/123"}])
         route.fulfill(json=data)
+    page.route("**/api/grap/status", lambda route: route.fulfill(json={"order": {
+        "stage": 2, "effective_from": "2025-11-01T00:00:00Z",
+        "source_url": "https://caqm.nic.in/test-order.pdf", "entered_at": "2025-11-01T01:00:00Z"}}))
     page.route("**/api/air/now*", station_brief)
     page.reload()
     page.get_by_text("शामिल स्टेशन", exact=False).click()
     expect(page.get_by_role("link", name="Test monitor")).to_be_visible()
+    expect(page.get_by_text("दर्ज चरण II", exact=True)).to_be_visible()
+    expect(page.get_by_role("link", name="CAQM का आदेश पढ़ें")).to_have_attribute("href", "https://caqm.nic.in/test-order.pdf")
     assert not errors, errors
     browser.close()

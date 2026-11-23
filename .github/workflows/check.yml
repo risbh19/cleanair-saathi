@@ -32,7 +32,7 @@ jobs:
         run: |
           db_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$(docker compose ps -q db)")
           export TEST_DATABASE_URL="postgresql://cleanair:ci-test-password@${db_ip}/cleanair"
-          python -m unittest backend.tests.test_households -v
+          python -m unittest backend.tests.test_households backend.tests.test_grap -v
           python - <<'PYTHON'
           import subprocess
           import httpx
