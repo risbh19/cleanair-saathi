@@ -1,0 +1,236 @@
+:root {
+  font-family: "DM Sans", "Nirmala UI", system-ui, sans-serif;
+  color: #173a36;
+  background: #f4f6ef;
+  font-size: 16px;
+  line-height: 1.5;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+header {
+  background: #163e38;
+  color: white;
+}
+.bar,
+nav,
+main {
+  width: min(100% - 2rem, 54rem);
+  margin: auto;
+}
+.bar,
+.heading,
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.bar {
+  padding: 1rem 0;
+}
+.brand {
+  font-size: 1.45rem;
+  letter-spacing: -0.04em;
+}
+.brand b {
+  color: #bce4a6;
+}
+button,
+input,
+select,
+summary {
+  font: inherit;
+}
+button,
+summary {
+  cursor: pointer;
+}
+button {
+  border: 1px solid #99afa3;
+  background: #fff;
+  color: #173a36;
+  border-radius: 0.6rem;
+  padding: 0.57rem 1rem;
+  min-height: 44px;
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+button.primary {
+  background: #195348;
+  color: white;
+}
+.bar button {
+  background: transparent;
+  border-color: #92b5a7;
+  color: white;
+}
+nav {
+  display: flex;
+  gap: 0.4rem;
+  border-bottom: 1px solid #bfcdc2;
+  padding: 0.6rem 0;
+}
+nav button {
+  border: 0;
+  background: none;
+}
+nav [aria-current] {
+  background: #d8e8d7;
+  font-weight: 700;
+}
+main {
+  padding: 2rem 0 4rem;
+}
+.heading {
+  margin-bottom: 1rem;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0 0 0.75rem;
+}
+h1 {
+  font-size: clamp(1.9rem, 5vw, 3rem);
+  line-height: 1.15;
+  letter-spacing: -0.045em;
+}
+h2 {
+  font-size: 1.25rem;
+}
+small {
+  font-size: 0.85rem;
+}
+.brief,
+.panel,
+fieldset {
+  border-radius: 1rem;
+  padding: clamp(1rem, 4vw, 2rem);
+  margin: 1rem 0;
+  background: white;
+  border: 1px solid #c3d1c6;
+}
+.brief {
+  background: #1c524a;
+  color: #fff;
+  border: 0;
+}
+.brief .reading {
+  font-size: clamp(3rem, 8vw, 5rem);
+  line-height: 1.15;
+  letter-spacing: -0.06em;
+}
+.reading span {
+  font-size: 1.25rem;
+  letter-spacing: 0;
+}
+.source {
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+.brief p:last-child {
+  margin-bottom: 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 1rem;
+}
+.stat {
+  padding: 1rem;
+  background: #edf3e9;
+  border-radius: 0.6rem;
+  display: grid;
+  gap: 0.25rem;
+}
+.stat strong {
+  font-size: 1.35rem;
+}
+summary {
+  padding: 1rem 0;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+td,
+th {
+  text-align: start;
+  border-bottom: 1px solid #d4dfd5;
+  padding: 0.5rem 0.2rem;
+}
+legend {
+  font-weight: 700;
+}
+fieldset {
+  min-width: 0;
+}
+.field {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.3rem 0 0.7rem;
+}
+.field span {
+  font-weight: 600;
+}
+.field input,
+.field select {
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  background: white;
+  color: #173a36;
+  border: 1px solid #829b8c;
+  border-radius: 0.4rem;
+  padding: 0.45rem;
+}
+.person {
+  border-bottom: 1px solid #bfcdc2;
+  padding: 0.75rem 0;
+  margin-bottom: 1rem;
+}
+input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  vertical-align: middle;
+  margin-right: 0.5rem;
+}
+.actions {
+  justify-content: flex-start;
+  margin-top: 1rem;
+}
+.grid + button {
+  margin-top: 1rem;
+}
+:focus-visible {
+  outline: 3px solid #ac5900;
+  outline-offset: 3px;
+}
+button:hover {
+  box-shadow: 0 0 0 1px currentColor;
+}
+[role="alert"] {
+  padding: 0.75rem;
+  background: #fff0dd;
+  color: #652f11;
+}
+@media (max-width: 420px) {
+  main {
+    padding-top: 1.3rem;
+  }
+  nav button {
+    padding-inline: 0.65rem;
+  }
+  th,
+  td {
+    font-size: 0.8rem;
+  }
+}
