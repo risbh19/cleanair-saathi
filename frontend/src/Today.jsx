@@ -76,6 +76,7 @@ export default function Today({ profile, openProfile }) {
       profile ? `/air/now?lat=${profile.lat}&lon=${profile.lon}` : "/air/now",
     ),
     forecast = useAir("/air/forecast?hours=48"),
+    grap = useAir("/grap/status"),
     weather = useAir("/weather/forecast?hours=48");
   const band = (b) => (b ? t(b, bands[b] || b) : "—");
   const n = now.data,
@@ -139,6 +140,47 @@ export default function Today({ profile, openProfile }) {
               </details>
             )}
           </>
+        )}
+      </section>
+      <section className="panel">
+        <h2>{t("Delhi-NCR GRAP status", "दिल्ली-एनसीआर GRAP स्थिति")}</h2>
+        {!grap.data ? (
+          <Status request={grap} />
+        ) : grap.data.order ? (
+          <>
+            <strong>
+              {grap.data.order.stage === 0
+                ? t(
+                    "No active stage in the recorded order",
+                    "दर्ज आदेश में कोई चरण लागू नहीं",
+                  )
+                : t("Recorded stage", "दर्ज चरण") +
+                  " " +
+                  ["", "I", "II", "III", "IV"][grap.data.order.stage]}
+            </strong>
+            <p>
+              {t("Effective from", "लागू होने का समय")} ·{" "}
+              {new Intl.DateTimeFormat(lang === "hi" ? "hi-IN" : "en-IN", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "Asia/Kolkata",
+              }).format(new Date(grap.data.order.effective_from))}{" "}
+              IST
+            </p>
+            <a href={grap.data.order.source_url}>
+              {t("Read the CAQM order", "CAQM का आदेश पढ़ें")}
+            </a>
+          </>
+        ) : (
+          <p>
+            {t(
+              "No effective CAQM order has been recorded.",
+              "लागू CAQM आदेश अभी दर्ज नहीं है।",
+            )}
+          </p>
         )}
       </section>
       {n && (
