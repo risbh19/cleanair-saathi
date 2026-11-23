@@ -74,7 +74,11 @@ function Dashboard({ lang, setLang }) {
       </nav>
       <main>
         {page === "today" && (
-          <Today profile={profile} openProfile={() => go("profile")} />
+          <Today
+            headers={headers}
+            profile={profile}
+            openProfile={() => go("profile")}
+          />
         )}
         {page === "lab" && (
           <Lab key={profile?.id ?? "anonymous"} profile={profile} />

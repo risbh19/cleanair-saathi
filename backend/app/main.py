@@ -9,10 +9,12 @@ import logging
 from os import environ
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .grap import router as grap_router
+from .engine.actions import daily_actions
+from .households import reload_profile
 from .households import router as households_router
 from .services.aqi import pm25_subindex
 from .services.stations import refresh_stations, station_summary
@@ -204,3 +206,22 @@ def hourly_weather(request: Request, hours: int = Query(48, ge=1, le=48)):
         response.update(source=archive["weather"]["source"], source_url=archive["weather"]["url"],
                         retrieved_on_utc=archive["retrieved_on_utc"], fetched_at=None)
     return response
+
+
+@app.get("/plan/today")
+def today_plan(request: Request, response: Response, profile=Depends(reload_profile)):
+    response.headers["Cache-Control"] = "no-store"
+    mode = request.app.state.mode
+    try:
+        brief = now(request, (profile["lat"], profile["lon"]))
+    except HTTPException as exc:
+        if exc.status_code != 503:
+            raise
+        brief = None
+    band = None
+    if brief and (mode != "live" or not brief["stale"]):
+        estimate = brief["hourly_subindex_estimate"]
+        if estimate:
+            band = estimate["band"]
+    return {"data_mode": mode, "band_used": band, "as_of": brief["as_of"] if brief else None,
+            "actions": daily_actions(profile, band)}

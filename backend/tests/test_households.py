@@ -38,6 +38,24 @@ class HouseholdTests(unittest.TestCase):
         self.assertEqual(result.status_code, 200, result.text)
         return result.json()
 
+    def test_plan_uses_owned_household_and_handles_live_outage(self):
+        saved = self.save(PROFILE)
+        try:
+            self.assertEqual(self.client.get("/plan/today").status_code, 401)
+            self.assertEqual(self.client.get("/plan/today", headers=self.other).status_code, 404)
+            result = self.client.get("/plan/today", headers=self.headers)
+            self.assertEqual(result.headers["cache-control"], "no-store")
+            self.assertEqual(result.json()["band_used"], "Very poor")
+            self.assertIn("avoid_roadside_wait", [a["id"] for a in result.json()["actions"]])
+            app.state.mode = "live"
+            for snapshot in (app.state.snapshot, None):
+                app.state.snapshot = snapshot
+                fallback = self.client.get("/plan/today", headers=self.headers).json()
+                self.assertIsNone(fallback["band_used"])
+                self.assertNotIn("move_activity_indoors", [a["id"] for a in fallback["actions"]])
+        finally:
+            self.client.delete("/households/" + saved["id"], headers=self.headers)
+
     def test_replace_reload_isolate_and_delete(self):
         saved = self.save(PROFILE)
         self.assertEqual((saved["lat"], saved["lon"]), (28.61, 77.21))
