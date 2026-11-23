@@ -2,6 +2,7 @@ import os
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -53,6 +54,46 @@ class HouseholdTests(unittest.TestCase):
                 fallback = self.client.get("/plan/today", headers=self.headers).json()
                 self.assertIsNone(fallback["band_used"])
                 self.assertNotIn("move_activity_indoors", [a["id"] for a in fallback["actions"]])
+        finally:
+            self.client.delete("/households/" + saved["id"], headers=self.headers)
+
+    def test_concurrent_plan_creation_and_owned_progress(self):
+        saved = self.save(PROFILE)
+        self.save(PROFILE, self.other)
+        def load(_):
+            return self.client.get("/plan/today", headers=self.headers).json()
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            first, second = pool.map(load, range(2))
+        self.assertEqual(first, second)
+        item = first["actions"][0]
+        path = f"/plan/items/{item['item_id']}/status"
+        def update(status, headers):
+            return self.client.post(path, json={"status": status}, headers=headers)
+        self.assertEqual(update("done", {}).status_code, 401)
+        self.assertEqual(update("done", self.other).status_code, 404)
+        self.assertEqual(update("invalid", self.headers).status_code, 422)
+        for status in ["done", "done", "skipped", "planned"]:
+            self.assertEqual(update(status, self.headers).json()["status"], status)
+            self.assertEqual(load(0)["actions"][0]["status"], status)
+        self.save({**PROFILE, "purifier_cadr_m3h": 300})
+        self.assertEqual(load(0), first)
+        self.client.delete("/households/" + saved["id"], headers=self.headers)
+        self.assertEqual(update("done", self.headers).status_code, 404)
+        with connect() as db:
+            self.assertEqual(db.execute("SELECT count(*) FROM plan_items WHERE id=%s", (item["item_id"],)).fetchone(), (0,))
+        other = self.client.get("/households/me", headers=self.other).json()
+        self.client.delete("/households/" + other["id"], headers=self.other)
+
+    def test_new_plan_at_delhi_midnight(self):
+        saved = self.save(PROFILE)
+        before = datetime(2025, 11, 2, 18, 29, tzinfo=timezone.utc)
+        try:
+            with patch("backend.app.main.utc_now", return_value=before):
+                day_one = self.client.get("/plan/today", headers=self.headers).json()
+            with patch("backend.app.main.utc_now", return_value=before + timedelta(minutes=1)):
+                day_two = self.client.get("/plan/today", headers=self.headers).json()
+            self.assertEqual([day_one["plan_date"], day_two["plan_date"]], ["2025-11-02", "2025-11-03"])
+            self.assertNotEqual(day_one["actions"][0]["item_id"], day_two["actions"][0]["item_id"])
         finally:
             self.client.delete("/households/" + saved["id"], headers=self.headers)
 
