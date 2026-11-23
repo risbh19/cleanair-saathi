@@ -65,7 +65,8 @@ export default function Today({ profile, openProfile }) {
   const t = useText(),
     lang = useContext(Language);
   const now = useAir("/air/now"),
-    forecast = useAir("/air/forecast?hours=48");
+    forecast = useAir("/air/forecast?hours=48"),
+    weather = useAir("/weather/forecast?hours=48");
   const band = (b) => (b ? t(b, bands[b] || b) : "—");
   const n = now.data,
     f = forecast.data;
@@ -168,6 +169,84 @@ export default function Today({ profile, openProfile }) {
           </>
         )}
       </section>
+      <section className="panel">
+        <h2>{t("Delhi weather forecast", "दिल्ली का मौसम पूर्वानुमान")}</h2>
+        {!weather.data ? (
+          <Status request={weather} />
+        ) : (
+          <>
+            <p className="source">
+              {weather.data.data_mode === "fixture" ? (
+                t("Demo · Synthetic weather", "डेमो · कृत्रिम मौसम डेटा")
+              ) : (
+                <a href={weather.data.source_url}>
+                  {t("Weather data by Open-Meteo", "मौसम डेटा · Open-Meteo")}
+                </a>
+              )}
+              {" · "}
+              {timeLabel(
+                weather.data.fetched_at ?? weather.data.as_of,
+                lang,
+              )}{" "}
+              IST
+              {weather.data.stale && " · " + t("Older data", "पुराना डेटा")}
+            </p>
+            <WeatherHour
+              rows={weather.data.hours}
+              format={format}
+              lang={lang}
+            />
+          </>
+        )}
+      </section>
+    </>
+  );
+}
+
+function WeatherHour({ rows, format, lang }) {
+  const t = useText();
+  const [index, setIndex] = useState(0);
+  const row = rows[index];
+  return (
+    <>
+      <label className="field">
+        <span>{t("Forecast hour", "पूर्वानुमान का समय")} (IST)</span>
+        <select
+          value={index}
+          onChange={(event) => setIndex(Number(event.target.value))}
+        >
+          {rows.map((item, i) => (
+            <option key={item.timestamp} value={i}>
+              {timeLabel(item.timestamp, lang)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <dl className="grid">
+        {[
+          [t("Temperature", "तापमान"), "temperature_2m", "°C"],
+          [
+            t("Relative humidity", "सापेक्ष आर्द्रता"),
+            "relative_humidity_2m",
+            "%",
+          ],
+          [t("Wind speed", "हवा की गति"), "wind_speed_10m", "m/s"],
+          [
+            t("Boundary-layer height", "वायुमंडलीय सीमा परत की ऊँचाई"),
+            "boundary_layer_height",
+            "m",
+          ],
+        ].map(([label, key, unit]) => (
+          <div className="stat" key={key}>
+            <dt>{label}</dt>
+            <dd>
+              {row[key] == null
+                ? t("Unavailable", "अनुपलब्ध")
+                : format(row[key]) + " " + unit}
+            </dd>
+          </div>
+        ))}
+      </dl>
     </>
   );
 }
