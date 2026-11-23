@@ -29,7 +29,16 @@ with sync_playwright() as playwright:
     expect(page.get_by_role("button", name="Central Delhi")).to_be_visible()
     expect(page.get_by_role("heading", name="Household action plan")).to_be_visible()
     expect(page.get_by_text("Choose where to wait", exact=True)).to_be_visible()
+    progress = page.get_by_label("Progress · ").first
+    progress.select_option("done")
+    expect(page.get_by_text("Completed 1/", exact=False)).to_be_visible()
+    page.reload()
+    expect(progress).to_have_value("done")
     page.get_by_role("button", name="हिन्दी").click()
+    progress_hi = page.get_by_label("प्रगति · ").first
+    progress_hi.select_option("skipped")
+    expect(progress_hi).to_be_enabled()
+    expect(page.get_by_text("पूरे हुए 0/", exact=False)).to_be_visible()
     expect(page.get_by_text("इंतज़ार की जगह चुनें", exact=True)).to_be_visible()
     expect(page.locator("html")).to_have_attribute("lang", "hi")
     expect(page.get_by_role("heading", name="आज की हवा")).to_be_visible()

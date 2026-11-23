@@ -25,7 +25,7 @@ function useAir(path, headers) {
       });
     return () => controller.abort();
   }, [path, attempt, headers]);
-  return { data, error, retry: () => retry((n) => n + 1) };
+  return { data, setData, error, retry: () => retry((n) => n + 1) };
 }
 
 function Status({ request }) {
@@ -380,6 +380,31 @@ function DailyPlan({ headers }) {
   const plan = useAir("/plan/today", headers);
   const lang = useContext(Language),
     t = useText();
+  const [saving, setSaving] = useState(null);
+  const [failed, setFailed] = useState(false);
+  async function update(item, status) {
+    setSaving(item.item_id);
+    setFailed(false);
+    try {
+      const result = await api("/plan/items/" + item.item_id + "/status", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      plan.setData((old) => ({
+        ...old,
+        actions: old.actions.map((action) =>
+          action.item_id === result.item_id
+            ? { ...action, status: result.status }
+            : action,
+        ),
+      }));
+    } catch {
+      setFailed(true);
+    } finally {
+      setSaving(null);
+    }
+  }
   return (
     <section className="panel">
       <h2>{t("Household action plan", "परिवार की कार्ययोजना")}</h2>
@@ -401,11 +426,37 @@ function DailyPlan({ headers }) {
             {plan.data.data_mode === "replay" &&
               " · " + t("Winter replay", "सर्दियों का रीप्ले")}
           </p>
+          <p>
+            {plan.data.plan_date} · {t("Completed", "पूरे हुए")}{" "}
+            {plan.data.actions.filter((a) => a.status === "done").length}/
+            {plan.data.actions.length}
+          </p>
+          {failed && (
+            <p role="alert">
+              {t(
+                "Could not save this change. Please try again.",
+                "बदलाव सहेजा नहीं जा सका। फिर कोशिश करें।",
+              )}
+            </p>
+          )}
           <ol>
             {plan.data.actions.map((action) => (
               <li key={action.id}>
                 <strong>{action[lang].title}</strong>
                 <p>{action[lang].step}</p>
+                <label>
+                  {t("Progress", "प्रगति")}{" "}
+                  <select
+                    aria-label={t("Progress", "प्रगति") + " · " + action[lang].title}
+                    value={action.status}
+                    disabled={saving !== null}
+                    onChange={(event) => update(action, event.target.value)}
+                  >
+                    <option value="planned">{t("Planned", "करना है")}</option>
+                    <option value="done">{t("Done", "पूरा हुआ")}</option>
+                    <option value="skipped">{t("Skipped", "छोड़ा गया")}</option>
+                  </select>
+                </label>
               </li>
             ))}
           </ol>

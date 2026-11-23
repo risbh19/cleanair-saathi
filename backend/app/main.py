@@ -13,6 +13,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .grap import router as grap_router
+from .plans import load_or_create, router as plans_router
 from .engine.actions import daily_actions
 from .households import reload_profile
 from .households import router as households_router
@@ -92,6 +93,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="CleanAir Saathi", version="0.2.0", lifespan=lifespan)
 app.include_router(households_router)
 app.include_router(grap_router)
+app.include_router(plans_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=environ.get("CORS_ORIGINS", "http://localhost:5173").split(","),
@@ -212,6 +214,11 @@ def hourly_weather(request: Request, hours: int = Query(48, ge=1, le=48)):
 def today_plan(request: Request, response: Response, profile=Depends(reload_profile)):
     response.headers["Cache-Control"] = "no-store"
     mode = request.app.state.mode
+    day = utc_now().astimezone(timezone(timedelta(hours=5, minutes=30))).date()
+    return load_or_create(profile, day, mode, lambda: generate_plan(request, profile))
+
+
+def generate_plan(request, profile):
     try:
         brief = now(request, (profile["lat"], profile["lon"]))
     except HTTPException as exc:
@@ -219,9 +226,8 @@ def today_plan(request: Request, response: Response, profile=Depends(reload_prof
             raise
         brief = None
     band = None
-    if brief and (mode != "live" or not brief["stale"]):
+    if brief and (request.app.state.mode != "live" or not brief["stale"]):
         estimate = brief["hourly_subindex_estimate"]
         if estimate:
             band = estimate["band"]
-    return {"data_mode": mode, "band_used": band, "as_of": brief["as_of"] if brief else None,
-            "actions": daily_actions(profile, band)}
+    return band, brief["as_of"] if brief else None, daily_actions(profile, band)
