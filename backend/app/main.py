@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .grap import router as grap_router
 from .plans import load_or_create, router as plans_router
+from .engine.commute import router as commute_router
 from .engine.actions import daily_actions
 from .households import reload_profile
 from .households import router as households_router
@@ -94,6 +95,7 @@ app = FastAPI(title="CleanAir Saathi", version="0.2.0", lifespan=lifespan)
 app.include_router(households_router)
 app.include_router(grap_router)
 app.include_router(plans_router)
+app.include_router(commute_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=environ.get("CORS_ORIGINS", "http://localhost:5173").split(","),

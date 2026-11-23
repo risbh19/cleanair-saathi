@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { api, Language, useText } from "./shared";
 import Profile from "./Profile";
 import Today from "./Today";
+import Commute from "./Commute";
 import Lab from "./Lab";
 import "./style.css";
 
@@ -45,6 +46,7 @@ function Dashboard({ lang, setLang }) {
     ["today", t("Today", "आज")],
     ["profile", t("Household", "परिवार")],
     ["lab", t("Indoor Lab", "घर की हवा")],
+    ["commute", t("Commute", "सफ़र")],
   ];
   return (
     <>
@@ -80,6 +82,7 @@ function Dashboard({ lang, setLang }) {
             openProfile={() => go("profile")}
           />
         )}
+        {page === "commute" && <Commute />}
         {page === "lab" && (
           <Lab key={profile?.id ?? "anonymous"} profile={profile} />
         )}
