@@ -1,4 +1,11 @@
 services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
   backend:
     build:
       context: .

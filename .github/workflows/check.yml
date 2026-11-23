@@ -47,6 +47,12 @@ jobs:
           PYTHON
       - run: curl --fail http://localhost:8000/health
       - run: curl --fail 'http://localhost:8000/air/now?lat=28.61&lon=77.21'
+      - name: Exercise the mobile fixture dashboard in Chrome
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: |
+          python -m pip install playwright==1.58.0
+          python frontend/smoke.py
       - name: Probe the live Delhi feed
         continue-on-error: true
         run: |
