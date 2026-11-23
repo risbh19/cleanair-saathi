@@ -10,6 +10,7 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from .households import router as households_router
 from .engine.indoor import RoomScenario, simulate
 from .brief import air_brief, load_csv
 from .services.forecast import HOUR, fetch_model, forecast
@@ -62,11 +63,12 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="CleanAir Saathi", version="0.2.0", lifespan=lifespan)
+app.include_router(households_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=environ.get("CORS_ORIGINS", "http://localhost:5173").split(","),
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 

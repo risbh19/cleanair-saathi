@@ -27,7 +27,7 @@ Copy `.env.example` to `.env`, set `POSTGRES_PASSWORD`, then start the services.
 docker compose up --build --wait
 ```
 
-The API listens on localhost port 8000. PostgreSQL stores its data in a named volume and enables pgvector when a new volume is initialized. The database is prepared for the next persistence milestone. The fixture API reads its bundled CSV directly.
+The API listens on localhost port 8000. PostgreSQL stores its data in a named volume and enables pgvector when a new volume is initialized. The backend applies pending household migrations on startup, including on existing volumes. The fixture API reads its bundled CSV directly.
 
 ## Verify
 
@@ -82,3 +82,28 @@ Each entry supplies the outdoor concentration for one hour. The selected scenari
 The model assumes a well-mixed room at equilibrium in each hour and excludes indoor sources such as cooking. Penetration, deposition, air exchange, breathing rate and the sizing target are editable scenario assumptions. The response includes them so a client can show how each estimate was calculated. The sizing output multiplies room volume by the selected clean-air changes per hour. This endpoint works offline in both data modes.
 
 [US EPA APEX model documentation, section 8.2.2](https://www.epa.gov/system/files/documents/2023-08/APEX52_UsersGuide_Vol2_June2023.pdf)
+
+## Anonymous household profiles
+
+Generate a random UUIDv4 once per browser profile (for example, `crypto.randomUUID()`), save it before the first request, and send it as `Authorization: Bearer <token>` on each household request. Treat it as a password and use HTTPS outside localhost. Anyone with the token can access that profile. Clearing the token removes access. PostgreSQL stores its SHA-256 digest.
+
+| Request | Result |
+| --- | --- |
+| `POST /households` | Save the complete profile. Reusing the token replaces the home, members and commutes together and keeps the household ID. |
+| `GET /households/me` | Reload the profile for the current token. An empty session returns 404. |
+| `DELETE /households/{id}` | Delete the owned profile, members and commutes. Success returns 204. An unknown or unowned ID returns 404. |
+
+Open `/docs`, select **Authorize**, enter the UUID, then try the following request body. Enter a neighbourhood for locality. Coordinates are rounded to two decimal places before storage.
+
+```json
+{
+  "lat": 28.6139, "lon": 77.2091, "locality": "Central Delhi",
+  "home_type": "flat", "room_area_m2": 12, "ceiling_m": 2.7,
+  "windows_leaky": false, "purifier_cadr_m3h": 0, "cooking_fuel": "lpg", "budget_band": "low",
+  "members": [{"age_band": "adult", "sensitive": false, "commutes": [
+    {"mode": "metro", "distance_km": 7, "depart_time": "08:30", "return_time": "18:00"}
+  ]}]
+}
+```
+
+For a native API run, set `DATABASE_URL` to your PostgreSQL connection string and run `python -m backend.db.migrate` before starting Uvicorn. Compose supplies the database settings and runs migrations automatically. To run the database integration tests, point `TEST_DATABASE_URL` at a disposable database and run `python -m unittest backend.tests.test_households -v`. Fixture air routes can run without a database.

@@ -6,8 +6,16 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     environment:
+      PGHOST: db
+      PGDATABASE: cleanair
+      PGUSER: cleanair
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       DATA_MODE: ${DATA_MODE:-fixture}
       CORS_ORIGINS: http://localhost:5173
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-ec", "python -m backend.db.migrate && exec uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"]
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 15s

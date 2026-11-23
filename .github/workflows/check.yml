@@ -18,7 +18,33 @@ jobs:
       - run: python -m unittest discover -s backend/tests -v
       - run: python -m backend.app.brief backend/data/fixtures/synthetic_day.csv
       - run: POSTGRES_PASSWORD=ci-test-password docker compose config --quiet
+      - name: Initialize a volume with the pre-profile schema
+        env:
+          POSTGRES_PASSWORD: ci-test-password
+        run: |
+          docker compose up --wait db
+          docker compose exec -T db psql -U cleanair -Atc "SELECT to_regclass('households') IS NULL" | grep -qx t
+          docker compose down
       - run: POSTGRES_PASSWORD=ci-test-password docker compose up --build --wait
+      - name: Verify household profiles against the upgraded PostgreSQL volume
+        env:
+          POSTGRES_PASSWORD: ci-test-password
+        run: |
+          db_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$(docker compose ps -q db)")
+          export TEST_DATABASE_URL="postgresql://cleanair:ci-test-password@${db_ip}/cleanair"
+          python -m unittest backend.tests.test_households -v
+          python - <<'PYTHON'
+          import subprocess
+          import httpx
+          from backend.tests.test_households import PROFILE, token
+
+          with httpx.Client(base_url="http://localhost:8000", headers=token()) as client:
+              saved = client.post("/households", json=PROFILE).raise_for_status().json()
+              subprocess.run(["docker", "compose", "down"], check=True)
+              subprocess.run(["docker", "compose", "up", "--wait"], check=True)
+              assert client.get("/households/me").raise_for_status().json() == saved
+              assert client.delete("/households/" + saved["id"]).status_code == 204
+          PYTHON
       - run: curl --fail http://localhost:8000/health
       - run: curl --fail 'http://localhost:8000/air/now?lat=28.61&lon=77.21'
       - name: Probe the live Delhi feed
