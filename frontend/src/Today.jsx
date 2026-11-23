@@ -93,6 +93,15 @@ export default function Today({ profile, openProfile }) {
       : Number(value.toFixed(1)).toLocaleString(
           lang === "hi" ? "hi-IN" : "en-IN",
         );
+  function indexLabel(index) {
+    if (index?.value_range) {
+      const [low, high] = index.value_range;
+      return (
+        t("band range", "श्रेणी सीमा") + " " + format(low) + "–" + format(high)
+      );
+    }
+    return format(index?.value);
+  }
   return (
     <>
       <div className="heading">
@@ -126,8 +135,14 @@ export default function Today({ profile, openProfile }) {
                     "स्टेशन PM2.5 उप-सूचकांक का अनुमान",
                   )
                 : t("Hourly PM2.5 sub-index", "घंटे का PM2.5 उप-सूचकांक")}{" "}
-              · {format(n.hourly_subindex_estimate?.value)}
+              · {indexLabel(n.hourly_subindex_estimate)}
             </p>
+            {(n.hourly_subindex_estimate?.value_range ||
+              n.pm25_subindex_24h?.value_range) && (
+              <a style={{ color: "inherit" }} href={n.methodology_url}>
+                {t("CPCB breakpoint table", "CPCB की श्रेणी तालिका")}
+              </a>
+            )}
             <Source data={n} />
             {n.stations?.length > 0 && (
               <details>
@@ -207,7 +222,7 @@ export default function Today({ profile, openProfile }) {
             {format(n.mean_24h_pm25_ug_m3)} µg/m³ ·{" "}
             {band(n.pm25_subindex_24h?.band)} ·{" "}
             {t("PM2.5 sub-index", "PM2.5 उप-सूचकांक")}{" "}
-            {format(n.pm25_subindex_24h?.value)}
+            {indexLabel(n.pm25_subindex_24h)}
           </p>
           {n.average_as_of && n.data_mode === "live" && (
             <p className="source">

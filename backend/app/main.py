@@ -22,7 +22,7 @@ from .brief import air_brief, load_csv
 from .services.forecast import HOUR, fetch_model, forecast, parse_model
 
 FIXTURE = Path(__file__).resolve().parents[1] / "data/fixtures/synthetic_day.csv"
-SOURCE_URL = "https://ies.gov.in/arthapedia/concept/national-air-quality-index"
+SOURCE_URL = "https://airquality.cpcb.gov.in/ccr_docs/About_AQI.pdf"
 
 
 def utc_now():

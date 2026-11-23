@@ -49,6 +49,16 @@ class ApiTests(unittest.TestCase):
         headers = {"Origin": "http://localhost:5173", "Access-Control-Request-Method": "POST"}
         self.assertEqual(self.client.options("/simulate/indoor", headers=headers).status_code, 200)
 
+    def test_severe_range_in_current_average_and_forecast(self):
+        series, reference = app.state.snapshot
+        app.state.snapshot = ({hour: 300 for hour in series}, reference)
+        current = self.client.get("/air/now").json()
+        forecast = self.client.get("/air/forecast?hours=1").json()
+        severe = {"band": "Severe", "value": None, "value_range": [401, 500]}
+        self.assertEqual(current["hourly_subindex_estimate"], severe)
+        self.assertEqual(current["pm25_subindex_24h"], severe)
+        self.assertEqual(forecast["hours"][0]["subindex_estimate"], severe)
+
     def test_health(self):
         self.assertEqual(self.client.get("/health").json()["status"], "ok")
 
