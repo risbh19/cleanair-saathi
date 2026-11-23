@@ -8,6 +8,7 @@ from math import isfinite
 class SubIndex:
     band: str
     value: int | None
+    value_range: tuple[int, int] | None = None
 
 
 # Upper limits from the National AQI breakpoint table.
@@ -34,4 +35,4 @@ def pm25_subindex(concentration: float) -> SubIndex:
         lower, previous = upper, limit
 
     # The published severe concentration interval has no upper breakpoint.
-    return SubIndex("Severe", None)
+    return SubIndex("Severe", None, (401, 500))

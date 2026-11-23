@@ -50,7 +50,7 @@ The bundled 24-hour series is synthetic and represents an illustrative Delhi cel
 
 Its last hour has PM2.5 of 150 µg/m³, yielding a component estimate of 323 (Very poor). The 24-hour mean is 107.375 µg/m³ and yields a separate estimate of 257 (Poor).
 
-The engine interpolates between the published PM2.5 breakpoints and truncates to a whole number for display, preserving the band for values fractionally above a cutoff. Above 250 µg/m³ it reports Severe and returns a null numerical value because the published concentration band has an open upper end. That numerical mapping needs a verified extension before it can cover the full 0–500 scale.
+The engine interpolates between the published PM2.5 breakpoints and truncates to a whole number for display, preserving the band for values fractionally above a cutoff. Above 250 µg/m³ it reports Severe and returns a null numerical value because the published concentration band has an open upper end. For these concentrations the API supplies `value_range: [401, 500]` from the [CPCB breakpoint table](https://airquality.cpcb.gov.in/ccr_docs/About_AQI.pdf). The dashboard labels this as a band range. Other bands retain their numeric estimate with a null range. Insufficient coverage still yields a null sub-index.
 
 A 24-hour estimate requires at least 16 distinct valid hourly slots. The official overall AQI also requires multiple pollutants. All figures here represent the PM2.5 component.
 

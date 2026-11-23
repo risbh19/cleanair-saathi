@@ -42,10 +42,10 @@ with sync_playwright() as playwright:
     # Exercise station attribution without an OpenAQ account in CI.
     def station_brief(route):
         data = route.fetch().json()
-        data.update(data_mode="live", stale=False, hourly_pm25_ug_m3=42, age_hours=1,
-                    hourly_subindex_estimate={"band": "Satisfactory", "value": 70},
+        data.update(data_mode="live", stale=False, hourly_pm25_ug_m3=300, age_hours=1,
+                    hourly_subindex_estimate={"band": "Severe", "value": None, "value_range": [401, 500]},
                     stations=[{"location_id": 123, "name": "Test monitor", "provider": "Test provider",
-                               "as_of": data["as_of"], "distance_km": 2, "pm25_ug_m3": 42,
+                               "as_of": data["as_of"], "distance_km": 2, "pm25_ug_m3": 300,
                                "url": "https://explore.openaq.org/locations/123"}])
         route.fulfill(json=data)
     page.route("**/api/grap/status", lambda route: route.fulfill(json={"order": {
@@ -57,5 +57,7 @@ with sync_playwright() as playwright:
     expect(page.get_by_role("link", name="Test monitor")).to_be_visible()
     expect(page.get_by_text("दर्ज चरण II", exact=True)).to_be_visible()
     expect(page.get_by_role("link", name="CAQM का आदेश पढ़ें")).to_have_attribute("href", "https://caqm.nic.in/test-order.pdf")
+    expect(page.get_by_text("श्रेणी सीमा 401–500", exact=False)).to_be_visible()
+    expect(page.get_by_role("link", name="CPCB की श्रेणी तालिका")).to_be_visible()
     assert not errors, errors
     browser.close()

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from backend.app.brief import air_brief, load_csv
-from backend.app.services.aqi import SubIndex, pm25_subindex
+from backend.app.services.aqi import pm25_subindex
 
 
 class SubIndexTests(unittest.TestCase):
@@ -22,7 +22,9 @@ class SubIndexTests(unittest.TestCase):
             (250, 400, "Very poor"), (250.01, None, "Severe"),
         ]:
             with self.subTest(value=value):
-                self.assertEqual(pm25_subindex(value), SubIndex(band, index))
+                result = pm25_subindex(value)
+                self.assertEqual((result.band, result.value), (band, index))
+                self.assertEqual(result.value_range, (401, 500) if band == "Severe" else None)
 
     def test_invalid_concentration(self):
         for value in [-1, float("nan"), float("inf")]:
