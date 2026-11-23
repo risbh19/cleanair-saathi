@@ -45,17 +45,23 @@ function Source({ data }) {
     lang = useContext(Language);
   return (
     <p className="source">
-      {data.data_mode === "fixture"
-        ? t("Demo · Synthetic Delhi data", "डेमो · दिल्ली का कृत्रिम डेटा")
-        : data.stations?.length
-          ? t(
-              "OpenAQ · Nearby station median",
-              "OpenAQ · नज़दीकी स्टेशनों की माध्यिका",
-            )
-          : t(
-              "Live mode · CAMS via Open-Meteo",
-              "लाइव मोड · Open-Meteo से CAMS",
-            )}
+      {data.data_mode === "fixture" ? (
+        t("Demo · Synthetic Delhi data", "डेमो · दिल्ली का कृत्रिम डेटा")
+      ) : data.data_mode === "replay" ? (
+        <a style={{ color: "inherit" }} href={data.source_url}>
+          {t(
+            "January 2025 replay · CAMS via Open-Meteo",
+            "जनवरी 2025 रीप्ले · Open-Meteo से CAMS",
+          )}
+        </a>
+      ) : data.stations?.length ? (
+        t(
+          "OpenAQ · Nearby station median",
+          "OpenAQ · नज़दीकी स्टेशनों की माध्यिका",
+        )
+      ) : (
+        t("Live mode · CAMS via Open-Meteo", "लाइव मोड · Open-Meteo से CAMS")
+      )}
       {" · "}
       {timeLabel(data.as_of, lang)} IST
       {data.stale && " · " + t("Older data", "पुराना डेटा")}
@@ -92,7 +98,11 @@ export default function Today({ profile, openProfile }) {
       <div className="heading">
         <div>
           <small>{t("DELHI · REGIONAL AIR", "दिल्ली · क्षेत्रीय हवा")}</small>
-          <h1>{t("Today’s air", "आज की हवा")}</h1>
+          <h1>
+            {n?.data_mode === "replay"
+              ? t("Delhi winter replay", "दिल्ली की सर्दियों का रीप्ले")
+              : t("Today’s air", "आज की हवा")}
+          </h1>
         </div>
         <button onClick={openProfile}>
           {profile ? profile.locality : t("Set up household", "परिवार जोड़ें")}{" "}
@@ -143,7 +153,14 @@ export default function Today({ profile, openProfile }) {
         )}
       </section>
       <section className="panel">
-        <h2>{t("Delhi-NCR GRAP status", "दिल्ली-एनसीआर GRAP स्थिति")}</h2>
+        <h2>
+          {n?.data_mode === "replay"
+            ? t(
+                "Latest recorded GRAP order (outside replay)",
+                "नवीनतम दर्ज GRAP आदेश (रीप्ले से अलग)",
+              )
+            : t("Delhi-NCR GRAP status", "दिल्ली-एनसीआर GRAP स्थिति")}
+        </h2>
         {!grap.data ? (
           <Status request={grap} />
         ) : grap.data.order ? (
@@ -204,7 +221,11 @@ export default function Today({ profile, openProfile }) {
         </section>
       )}
       <section className="panel">
-        <h2>{t("48-hour forecast", "48 घंटे का पूर्वानुमान")}</h2>
+        <h2>
+          {f?.data_mode === "replay"
+            ? t("Next 48 archived hours", "अगले 48 संग्रहित घंटे")
+            : t("48-hour forecast", "48 घंटे का पूर्वानुमान")}
+        </h2>
         {!f ? (
           <Status request={forecast} />
         ) : (
@@ -263,7 +284,12 @@ export default function Today({ profile, openProfile }) {
                 t("Demo · Synthetic weather", "डेमो · कृत्रिम मौसम डेटा")
               ) : (
                 <a href={weather.data.source_url}>
-                  {t("Weather data by Open-Meteo", "मौसम डेटा · Open-Meteo")}
+                  {weather.data.data_mode === "replay"
+                    ? t(
+                        "January 2025 replay · Open-Meteo weather archive",
+                        "जनवरी 2025 रीप्ले · Open-Meteo मौसम संग्रह",
+                      )
+                    : t("Weather data by Open-Meteo", "मौसम डेटा · Open-Meteo")}
                 </a>
               )}
               {" · "}

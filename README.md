@@ -135,3 +135,11 @@ Today reads `GET /grap/status`. It shows the most recent recorded CAQM order who
 To record an order, configure a strong random `GRAP_ADMIN_TOKEN` in the backend environment and recreate the backend service. In the local API docs, authorize the admin request with that bearer token and call `PUT /admin/grap-status`. Supply the highest stage still in effect after the order (integer 0–4), `effective_from` with its UTC offset, and `source_url` pointing to the official HTTPS order PDF on caqm.nic.in. Verify the document and effective time before entering them. Use HTTPS for remote administration. The dashboard only uses the public read route.
 
 A future order takes effect at its specified time. Repeating the same entry preserves its recorded timestamp. Submitting corrected details for the same effective time replaces that entry. Older orders remain stored. The admin route is disabled until its token is configured.
+
+## Offline Delhi winter replay
+
+Set `DATA_MODE=replay` in the local `.env` and run `docker compose up -d --build`. Open http://localhost:5173. To return to the synthetic demo, set `DATA_MODE=fixture` and rerun Compose.
+
+The replay bundles 168 hourly model values for 6–12 January 2025 UTC at the requested Delhi coordinates (28.61, 77.21). Its reference time is 10 January at 23:00 UTC (11 January at 04:30 IST). The usual air and weather endpoints return the next 48 archived hours. The 24-hour PM2.5 average uses only values up to the reference time. These are retrospectively retrieved model series. No historical forecast issuance or station measurement is implied. The GRAP panel still reads the latest effective order in the local database.
+
+The [capture manifest](backend/data/fixtures/delhi-winter-2025/manifest.json) records the exact retrieval URLs, UTC capture date and SHA-256 digests of the two original JSON responses. Air data are from Copernicus Atmosphere Monitoring Service (CAMS) via Open-Meteo. Weather data are from the Open-Meteo Historical Forecast API. The API returns these source links and the capture date in replay mode. [Air data attribution](https://open-meteo.com/en/docs/air-quality-api) · [Weather archive](https://open-meteo.com/en/docs/historical-forecast-api) · [Open-Meteo terms](https://open-meteo.com/en/terms)
