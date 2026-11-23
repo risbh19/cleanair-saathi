@@ -2,6 +2,7 @@
 
 import asyncio
 from contextlib import asynccontextmanager
+from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 import json
 import logging
@@ -12,6 +13,8 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from .households import router as households_router
+from .services.aqi import pm25_subindex
+from .services.stations import refresh_stations, station_summary
 from .services.weather import fetch_weather, parse_weather, weather_window
 from .engine.indoor import RoomScenario, simulate
 from .brief import air_brief, load_csv
@@ -51,6 +54,7 @@ async def lifespan(app: FastAPI):
     app.state.mode = mode
     app.state.snapshot = None
     app.state.weather = None
+    app.state.stations = {}
     if mode == "fixture":
         observations = load_csv(FIXTURE)
         end = max(observations)
@@ -61,6 +65,8 @@ async def lifespan(app: FastAPI):
         yield
     elif mode == "live":
         tasks = [asyncio.create_task(refresh(app)), asyncio.create_task(refresh(app, weather=True))]
+        if key := environ.get("OPENAQ_API_KEY"):
+            tasks.append(asyncio.create_task(refresh_stations(app, key)))
         try:
             yield
         finally:
@@ -86,10 +92,14 @@ def health(request: Request):
     return {"status": "ok", "data_mode": request.app.state.mode}
 
 
-def cached_air(request: Request, lat: float = Query(28.61, ge=-90, le=90),
+def delhi_coordinates(lat: float = Query(28.61, ge=-90, le=90),
                lon: float = Query(77.21, ge=-180, le=180)):
     if not (28.5 <= lat <= 28.8 and 77.0 <= lon <= 77.4):
         raise HTTPException(422, "This feed covers the Delhi cell only")
+    return lat, lon
+
+
+def cached_air(request: Request):
     snapshot = request.app.state.snapshot
     if snapshot is None:
         raise HTTPException(503, "Delhi air data is still unavailable", headers={"Retry-After": "60"})
@@ -110,17 +120,40 @@ def cached_air(request: Request, lat: float = Query(28.61, ge=-90, le=90),
 
 
 @app.get("/air/now")
-def now(context=Depends(cached_air)):
-    series, hour, metadata, requested = context
-    end = max((stamp for stamp in series if stamp <= hour), default=None)
-    if end is None:
-        raise HTTPException(503, "Current Delhi air data is unavailable")
-    age = max(0, (requested - end).total_seconds() / 3600)
-    return {**metadata, "stale": metadata["stale"] or age >= 3,
-            "age_hours": round(age, 1), **air_brief(series, end)}
+def now(request: Request, coords=Depends(delhi_coordinates)):
+    requested = utc_now()
+    station = (station_summary(request.app.state.stations.copy(), *coords, requested)
+               if request.app.state.mode == "live" else None)
+    if request.app.state.snapshot is not None:
+        series, hour, metadata, requested = cached_air(request)
+        end = max((stamp for stamp in series if stamp <= hour), default=None)
+    else:
+        end = None
+    if end is None and station is None:
+        raise HTTPException(503, "Current Delhi air data is unavailable", headers={"Retry-After": "60"})
+    if end is not None:
+        age = (requested - end).total_seconds() / 3600
+        brief = {**metadata, **air_brief(series, end), "age_hours": round(max(0, age), 1),
+                 "stale": metadata["stale"] or age >= 3}
+    else:
+        brief = {"mean_24h_pm25_ug_m3": None, "pm25_subindex_24h": None, "valid_hours": 0}
+    brief["average_source"] = brief.get("source")
+    brief["average_as_of"] = end.isoformat() if end else None
+    brief["average_stale"] = brief.get("stale")
+    if station:
+        stamp = station["oldest"]
+        return {**brief, "source": "OpenAQ station median", "source_url": "https://openaq.org/",
+                "data_mode": "live", "methodology_url": SOURCE_URL, "stale": False,
+                "location": {"lat": coords[0], "lon": coords[1], "locality": "Delhi"},
+                "as_of": stamp.isoformat(), "fetched_at": None,
+                "age_hours": round((requested - stamp).total_seconds() / 3600, 1),
+                "hourly_pm25_ug_m3": station["value"],
+                "hourly_subindex_estimate": asdict(pm25_subindex(station["value"])),
+                "stations": station["stations"]}
+    return {**brief, "stations": []}
 
 
-@app.get("/air/forecast")
+@app.get("/air/forecast", dependencies=[Depends(delhi_coordinates)])
 def hourly_forecast(hours: int = Query(48, ge=1, le=48), context=Depends(cached_air)):
     series, hour, metadata, _ = context
     result = forecast(series, hour + HOUR, hours)
