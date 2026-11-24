@@ -89,6 +89,18 @@ with sync_playwright() as playwright:
     page.get_by_role("button", name="परिवार मिटाएँ").click()
     page.get_by_role("button", name="मिटाने की पुष्टि करें").click()
     expect(page.get_by_role("button", name="परिवार जोड़ें")).to_be_visible()
+    page.get_by_role("button", name="परिवार जोड़ें").click()
+    page.get_by_label("इलाका", exact=True).fill("Karol Bagh")
+    page.get_by_text("उदाहरण परिवार चुनें", exact=True).click()
+    page.get_by_role("button", name="स्कूटर से काम पर जाने वाले दो वयस्क").click()
+    expect(page.get_by_label("इलाका", exact=True)).to_have_value("Karol Bagh")
+    page.get_by_role("button", name="आगे बढ़ें", exact=True).click()
+    page.get_by_role("button", name="आगे बढ़ें", exact=True).click()
+    expect(page.get_by_role("heading", name="सदस्य 2")).to_be_visible()
+    expect(page.get_by_label("दूरी (किमी)").first).to_have_value("14")
+    page.get_by_label("दूरी (किमी)").first.fill("12")
+    page.get_by_role("button", name="परिवार सहेजें").click()
+    expect(page.get_by_role("button", name="Karol Bagh")).to_be_visible()
     # Exercise station attribution without an OpenAQ account in CI.
     def station_brief(route):
         data = route.fetch().json()
