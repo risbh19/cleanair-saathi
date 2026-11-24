@@ -55,6 +55,11 @@ with sync_playwright() as playwright:
     page.get_by_role("button", name="घर की हवा", exact=True).click()
     page.get_by_role("button", name="तुलना करें").click()
     expect(page.get_by_role("heading", name="साँस में गया अनुमानित PM2.5")).to_be_visible()
+    page.get_by_text("मॉडल की मान्यताएँ", exact=True).click()
+    expect(page.get_by_text("100 µg/m³ × 8 h", exact=True)).to_be_visible()
+    expect(page.get_by_role("link", name="EPA मॉडल संदर्भ")).to_have_attribute(
+        "href", "https://www.epa.gov/system/files/documents/2023-08/APEX52_UsersGuide_Vol2_June2023.pdf"
+    )
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
     page.get_by_role("button", name="परिवार", exact=True).click()
     expect(page.get_by_label("इलाका", exact=True)).to_have_value("Central Delhi")
