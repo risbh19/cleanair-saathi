@@ -73,6 +73,11 @@ with sync_playwright() as playwright:
     forecast = hourly.value.json()
     assert simulation.value.post_data_json["outdoor_pm25_ug_m3"] == [h["pm25_ug_m3"] for h in forecast["hours"]]
     expect(page.get_by_text("डेमो · दिल्ली का कृत्रिम डेटा", exact=False)).to_be_visible()
+    page.get_by_text("घंटेवार मान", exact=True).click()
+    hourly_table = page.get_by_role("table", name="कमरे का अनुमानित PM2.5 (µg/m³)")
+    expect(hourly_table.get_by_role("columnheader", name="समय (IST)")).to_be_visible()
+    expect(hourly_table.get_by_role("rowheader")).to_have_count(8)
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
     forecast["hours"][0]["pm25_ug_m3"] = None
     page.route("**/air/forecast?hours=8", lambda route: route.fulfill(json=forecast))
     page.get_by_role("button", name="तुलना करें").click()
