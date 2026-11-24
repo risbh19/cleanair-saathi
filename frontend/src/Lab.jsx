@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { api, Field, useText } from "./shared";
+import { api, Field, Source, useText } from "./shared";
 
 export default function Lab({ profile }) {
   const t = useText();
@@ -9,6 +9,7 @@ export default function Lab({ profile }) {
     purifier_cadr_m3_h: profile?.purifier_cadr_m3h ?? 0,
     windows: "closed",
     outside: 100,
+    useForecast: false,
     hours: 8,
   });
   const [result, setResult] = useState(null),
@@ -22,19 +23,24 @@ export default function Lab({ profile }) {
   async function run(e) {
     e.preventDefault();
     setBusy(true);
+    setResult(null);
     setError(false);
-    const { outside, hours, ...settings } = room;
+    const { outside, hours, useForecast, ...settings } = room;
     try {
-      setResult(
-        await api("/simulate/indoor", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...settings,
-            outdoor_pm25_ug_m3: Array(hours).fill(outside),
-          }),
-        }),
-      );
+      const forecast = useForecast ? await api(`/air/forecast?hours=${hours}`) : null;
+      const outdoor = forecast
+        ? forecast.hours.map((hour) => hour.pm25_ug_m3)
+        : Array(hours).fill(outside);
+      if (outdoor.length !== hours || !outdoor.every(Number.isFinite)) {
+        setError("incomplete");
+        return;
+      }
+      const estimate = await api("/simulate/indoor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...settings, outdoor_pm25_ug_m3: outdoor }),
+      });
+      setResult({ ...estimate, forecast });
     } catch {
       setError(true);
     } finally {
@@ -46,13 +52,18 @@ export default function Lab({ profile }) {
       <h1>{t("Indoor Air Lab", "घर की हवा की लैब")}</h1>
       <p>
         {t(
-          "Compare your settings with the same room closed and unfiltered. Enter one outdoor concentration for the entire scenario.",
-          "अपनी सेटिंग की तुलना उसी बंद कमरे से करें जिसमें फ़िल्टर नहीं है। पूरी अवधि के लिए बाहर का एक सांद्रता मान भरें।",
+          "Compare your settings with the same room closed and unfiltered. Use one outdoor concentration or the hourly Delhi forecast.",
+          "अपनी सेटिंग की तुलना उसी बंद कमरे से करें जिसमें फ़िल्टर नहीं है। बाहर के लिए एक सांद्रता मान या दिल्ली का घंटेवार पूर्वानुमान चुनें।",
         )}
       </p>
       <form onSubmit={run}>
         <fieldset disabled={busy}>
           <legend>{t("Room scenario", "कमरे की स्थिति")}</legend>
+          <label>
+            <input type="checkbox" checked={room.useForecast}
+              onChange={(e) => edit("useForecast", e.target.checked)} />
+            {t("Use hourly Delhi forecast", "दिल्ली का घंटेवार पूर्वानुमान इस्तेमाल करें")}
+          </label>
           <div className="grid">
             {[
               [
@@ -80,7 +91,7 @@ export default function Lab({ profile }) {
                 10000,
               ],
               ["hours", t("Duration (hours)", "अवधि (घंटे)"), 1, 48],
-            ].map(([key, label, min, max]) => (
+            ].filter(([key]) => key !== "outside" || !room.useForecast).map(([key, label, min, max]) => (
               <Field key={key} title={label}>
                 <input
                   required
@@ -115,7 +126,10 @@ export default function Lab({ profile }) {
       </form>
       {error && (
         <p role="alert">
-          {t(
+          {error === "incomplete" ? t(
+            "Some forecast hours are missing. Shorten the duration or enter an outdoor concentration.",
+            "कुछ घंटों का पूर्वानुमान उपलब्ध नहीं है। अवधि घटाएँ या बाहर का सांद्रता मान भरें।",
+          ) : t(
             "Simulation unavailable. Try again.",
             "सिमुलेशन उपलब्ध नहीं है। फिर कोशिश करें।",
           )}
@@ -133,6 +147,7 @@ export default function Lab({ profile }) {
             {result.baseline_closed_no_purifier.inhaled_pm25_ug.toPrecision(2)}{" "}
             µg
           </p>
+          {result.forecast && <Source data={result.forecast} />}
           <DoseDifference percent={result.reduction_percent} />
           <small>
             {t(
@@ -200,7 +215,9 @@ function ModelAssumptions({ result }) {
     [t("Room dimensions", "कमरे का आकार"), `${room.floor_area_m2} m² × ${room.ceiling_height_m} m`],
     [t("Windows", "खिड़कियाँ"), room.windows === "open" ? t("Open", "खुली") : t("Closed", "बंद")],
     [t("Purifier CADR", "प्यूरिफ़ायर CADR"), `${room.purifier_cadr_m3_h} m³/h`],
-    [t("Outdoor PM2.5", "बाहर का PM2.5"), `${room.outdoor_pm25_ug_m3[0]} µg/m³ × ${room.outdoor_pm25_ug_m3.length} h`],
+    [t("Outdoor PM2.5", "बाहर का PM2.5"), result.forecast
+      ? `${room.outdoor_pm25_ug_m3.join(", ")} µg/m³`
+      : `${room.outdoor_pm25_ug_m3[0]} µg/m³ × ${room.outdoor_pm25_ug_m3.length} h`],
     [t("Particle penetration fraction", "अंदर आने वाले कणों का अंश"), room.penetration_fraction],
     [t("Air changes per hour (closed / open)", "प्रति घंटे हवा का बदलाव (बंद / खुली खिड़कियाँ)"), `${room.closed_air_changes_h} / ${room.open_air_changes_h}`],
     [t("Particle deposition rate", "कणों के जमने की दर"), `${room.deposition_rate_h} /h`],

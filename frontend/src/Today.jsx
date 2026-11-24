@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { api, Language, timeLabel, useText } from "./shared";
+import { api, Language, Source, timeLabel, useText } from "./shared";
 
 const bands = {
   Good: "अच्छा",
@@ -37,41 +37,6 @@ function Status({ request }) {
     </div>
   ) : (
     <p role="status">{t("Loading…", "लोड हो रहा है…")}</p>
-  );
-}
-
-function Source({ data }) {
-  const t = useText(),
-    lang = useContext(Language);
-  return (
-    <p className="source">
-      {data.data_mode === "fixture" ? (
-        t("Demo · Synthetic Delhi data", "डेमो · दिल्ली का कृत्रिम डेटा")
-      ) : data.data_mode === "replay" ? (
-        <a style={{ color: "inherit" }} href={data.source_url}>
-          {t(
-            "January 2025 replay · CAMS via Open-Meteo",
-            "जनवरी 2025 रीप्ले · Open-Meteo से CAMS",
-          )}
-        </a>
-      ) : data.stations?.length ? (
-        t(
-          "OpenAQ · Nearby station median",
-          "OpenAQ · नज़दीकी स्टेशनों की माध्यिका",
-        )
-      ) : (
-        t("Live mode · CAMS via Open-Meteo", "लाइव मोड · Open-Meteo से CAMS")
-      )}
-      {" · "}
-      {timeLabel(data.as_of, lang)} IST
-      {data.stale && " · " + t("Older data", "पुराना डेटा")}
-      {data.age_hours != null &&
-        data.data_mode === "live" &&
-        " · " +
-          Math.round(data.age_hours) +
-          " " +
-          t("hours old", "घंटे पुराना")}
-    </p>
   );
 }
 

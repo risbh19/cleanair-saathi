@@ -31,7 +31,7 @@ The API listens on localhost port 8000. PostgreSQL stores its data in a named vo
 
 ## Household dashboard
 
-Open http://localhost:5173 after `docker compose up --build --wait`. Today shows the Delhi regional PM2.5 component, its source and timestamp, and the 48-hour forecast in India Standard Time. Switch between English and Hindi in the header. Household setup saves location, home details, members and commutes using the anonymous profile API. The Indoor Lab uses room settings from the saved profile and an editable outdoor concentration.
+Open http://localhost:5173 after `docker compose up --build --wait`. Today shows the Delhi regional PM2.5 component, its source and timestamp, and the 48-hour forecast in India Standard Time. Switch between English and Hindi in the header. Household setup saves location, home details, members and commutes using the anonymous profile API. The Indoor Lab uses room settings from the saved profile with either an editable outdoor concentration or hourly Delhi forecast concentrations for the selected duration.
 
 For frontend development, start the backend on port 8000, then run `npm ci` and `npm run dev` from `frontend/` using Node 22.12 or newer. Vite proxies requests under `/api` to the local backend. Compose serves the production build through nginx. Each browser origin keeps its own anonymous token and language preference.
 
