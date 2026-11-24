@@ -1,0 +1,134 @@
+{
+  "eaa6fcfda740a3353a33f1f4092de9f7d0ba7a65557c81a5d4618228c86bcdb8": [
+    "filter"
+  ],
+  "53268e0a8a61f4658a4a991c85a2c33adb22561d93b31015a6b59830d830da5d": [
+    "size"
+  ],
+  "e0e20539d5574e7fa5cf3d1a5328e918e19ec85b4d192397bae319df2d824068": [
+    "check_purifier",
+    "compare_motor_trip",
+    "avoid_roadside_wait",
+    "combine_errands",
+    "compare_room_settings",
+    "check_cooking_vent",
+    "wet_mop"
+  ],
+  "5cc2f4076c92789c69fe01114322815df13283c9e98cdb89d6a037e5b3bc49c1": [
+    "check_purifier",
+    "compare_motor_trip",
+    "avoid_roadside_wait",
+    "combine_errands",
+    "compare_room_settings",
+    "check_cooking_vent",
+    "wet_mop"
+  ],
+  "55ab9853dbb1e3854d95d1410fae014c791548825a984d54e3532a59a0b62e27": [
+    "check_purifier",
+    "compare_motor_trip",
+    "avoid_roadside_wait",
+    "combine_errands",
+    "compare_room_settings",
+    "check_cooking_vent",
+    "wet_mop"
+  ],
+  "7d26edfc2deaad9e19404a59629c98a5f58dff14bbcc887bfa13d3f649dde1a8": [
+    "check_purifier",
+    "compare_motor_trip",
+    "avoid_roadside_wait",
+    "combine_errands",
+    "compare_room_settings",
+    "check_cooking_vent",
+    "wet_mop"
+  ],
+  "c3c0b9401372b1a7fe55b60feb9d494fd5441c5050be148195f53adc724d43eb": [
+    "move_activity_indoors",
+    "review_sensitive_member_trip",
+    "check_purifier",
+    "compare_motor_trip",
+    "review_school_trip",
+    "avoid_roadside_wait",
+    "combine_errands"
+  ],
+  "b58973a6db46ad4c752b090d480a729d3415ceed5151f96e22d8bfa2c45c8f1b": [
+    "move_activity_indoors",
+    "review_sensitive_member_trip",
+    "check_purifier",
+    "compare_motor_trip",
+    "review_school_trip",
+    "avoid_roadside_wait",
+    "combine_errands"
+  ],
+  "6aeb163fd8692ec204da88dfd53866e5a110d7c0eec6097f53c176e3964856fe": [
+    "move_activity_indoors",
+    "check_purifier",
+    "compare_motor_trip",
+    "avoid_roadside_wait",
+    "combine_errands",
+    "compare_room_settings",
+    "check_cooking_vent"
+  ],
+  "fd980393095097d8de5b2583ea63faaf38d72ef7666a6e793fc34bc36f5025c6": [
+    "move_activity_indoors",
+    "check_purifier",
+    "compare_motor_trip",
+    "avoid_roadside_wait",
+    "combine_errands",
+    "compare_room_settings",
+    "check_cooking_vent"
+  ],
+  "ecd102d7e4a5438cd3d801e460146f0662ccaa70c46d21fa9f6541d8d595b0d7": [
+    "check_purifier",
+    "avoid_roadside_wait",
+    "compare_room_settings",
+    "check_cooking_vent",
+    "wet_mop",
+    "avoid_incense",
+    "avoid_waste_burning"
+  ],
+  "d63e12577c48bb959e88892f04c7367e1e7ad65000093dbb44b3bb029d44aad9": [
+    "check_purifier",
+    "avoid_roadside_wait",
+    "compare_room_settings",
+    "check_cooking_vent",
+    "wet_mop",
+    "avoid_incense",
+    "avoid_waste_burning"
+  ],
+  "5401ec0aeeca43aad761d4d4789ea3a522a74bf93b2d2c9ff6b16685b385b361": [
+    "check_purifier",
+    "avoid_roadside_wait",
+    "compare_room_settings",
+    "check_cooking_vent",
+    "wet_mop",
+    "avoid_incense",
+    "avoid_waste_burning"
+  ],
+  "86724d809f044542af51c9a700aace7e1a562dfe94a382241bf4416d22b7d78b": [
+    "check_purifier",
+    "avoid_roadside_wait",
+    "compare_room_settings",
+    "check_cooking_vent",
+    "wet_mop",
+    "avoid_incense",
+    "avoid_waste_burning"
+  ],
+  "ca4bcd4b17a96ea4f5699e8a81ca094e75151b76275fbdd6353b21cfdffcad4f": [
+    "move_activity_indoors",
+    "review_sensitive_member_trip",
+    "check_purifier",
+    "avoid_roadside_wait",
+    "compare_room_settings",
+    "check_cooking_vent",
+    "wet_mop"
+  ],
+  "83f678704b5338dedee73c6d10303da938e218425bbe7593a1860057dd732138": [
+    "move_activity_indoors",
+    "review_sensitive_member_trip",
+    "check_purifier",
+    "avoid_roadside_wait",
+    "compare_room_settings",
+    "check_cooking_vent",
+    "wet_mop"
+  ]
+}

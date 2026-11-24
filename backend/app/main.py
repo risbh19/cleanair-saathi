@@ -12,6 +12,7 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
+from .saathi import rank_plan, router as saathi_router
 from .grap import router as grap_router
 from .plans import load_or_create, router as plans_router
 from .engine.commute import router as commute_router
@@ -94,6 +95,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="CleanAir Saathi", version="0.2.0", lifespan=lifespan)
 app.include_router(households_router)
 app.include_router(grap_router)
+app.include_router(saathi_router)
 app.include_router(plans_router)
 app.include_router(commute_router)
 app.add_middleware(
@@ -232,4 +234,4 @@ def generate_plan(request, profile):
         estimate = brief["hourly_subindex_estimate"]
         if estimate:
             band = estimate["band"]
-    return band, brief["as_of"] if brief else None, daily_actions(profile, band)
+    return band, brief["as_of"] if brief else None, rank_plan(daily_actions(profile, band), band)
