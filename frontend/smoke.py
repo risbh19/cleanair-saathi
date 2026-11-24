@@ -60,6 +60,8 @@ with sync_playwright() as playwright:
     expect(page.get_by_role("link", name="EPA मॉडल संदर्भ")).to_have_attribute(
         "href", "https://www.epa.gov/system/files/documents/2023-08/APEX52_UsersGuide_Vol2_June2023.pdf"
     )
+    expect(page.get_by_role("heading", name="प्यूरिफ़ायर की क्षमता")).to_be_visible()
+    expect(page.get_by_text("लगभग 156 m³/h", exact=False)).to_be_visible()
     expect(page.get_by_text("दोनों स्थितियों में अनुमानित मात्रा समान है।")).to_be_visible()
     page.get_by_role("group", name="कमरे की स्थिति").get_by_role("combobox").select_option("open")
     page.get_by_role("button", name="तुलना करें").click()
