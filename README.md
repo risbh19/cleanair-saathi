@@ -2,6 +2,8 @@
 
 CleanAir Saathi helps a Delhi household turn an air-quality forecast into a daily plan. Set up a household, compare room and commute choices, ask a question in Hindi or English, and track completed actions. Each air reading shows its source and timestamp. The PM2.5 band describes the particulate component of AQI. Exposure and CO₂ figures are modeled comparisons.
 
+**[Watch the captioned app walkthrough (MP4)](docs/cleanair-walkthrough.mp4)**
+
 ![Today dashboard showing the synthetic Delhi reading of 150 µg/m³, its Very poor band and source timestamp](docs/screenshots/today.png)
 
 [Local deployment](#local-deployment) · [Walkthrough](#walkthrough) · [Data modes](#data-modes-and-optional-services) · [Development and tests](#development-and-tests) · [Data and API reference](docs/data-and-api.md)
