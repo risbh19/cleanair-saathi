@@ -159,3 +159,9 @@ Open **Commute** to compare a single passenger travelling the same one-way dista
 For a car, scooter or auto, divide distance × vehicle factor by the number of travellers sharing the trip. For a bus the factor already includes occupancy. The signed difference is baseline minus alternative, in grams of CO₂ per passenger. A positive difference indicates a lower estimate for the alternative.
 
 For example, send `{"distance_km":10,"baseline":{"mode":"petrol_hatchback_lt1000cc","travellers":2},"alternative":{"mode":"intracity_bus"}}`. The estimates are 635 g and 151.61 g. Each API leg also accepts optional `exposure` containing `pm25_ug_m3`, `duration_min` and `breathing_m3_h`. Inhaled mass in µg is concentration × hours × breathing rate. The API returns a dose difference only when both scenarios supply exposure inputs. The dashboard compares CO₂ only.
+
+## Commute examples in household plans
+
+When a new plan includes the public transport comparison card, it uses the first saved car or two-wheeler trip in member and commute order. The example compares one traveller on that one-way distance with the same distance on a city bus. The car example assumes a petrol hatchback under 1,000 cc and the two-wheeler example assumes a scooter under 110 cc. These are scenario assumptions because the household profile records only the broad travel mode.
+
+The optional `commute_example` field on the saved action contains the simulator result, including both factors, source links, vintage and the signed difference in grams of CO₂. If a required factor is missing, the card remains available without an estimate. Existing plans retain their saved cards. Marking an action done tracks completion only.

@@ -6,9 +6,22 @@ from fastapi import APIRouter, Depends, HTTPException
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict
 
+from .engine.commute import Comparison, Leg, calculate_comparison
 from .households import private_response, session_digest, transaction
 
 router = APIRouter(prefix="/plan", tags=["Plans"], dependencies=[Depends(private_response)])
+
+
+def commute_example(db, profile):
+    examples = {"car": "petrol_hatchback_lt1000cc", "two_wheeler": "scooter_lt110cc"}
+    for member in profile["members"]:
+        for trip in member["commutes"]:
+            mode = examples.get(trip["mode"])
+            if mode:
+                scenario = Comparison(distance_km=trip["distance_km"], baseline=Leg(mode=mode),
+                                      alternative=Leg(mode="intracity_bus"))
+                return calculate_comparison(db, scenario)
+    return None
 
 
 def load_or_create(profile, day, mode, generate):
@@ -25,6 +38,10 @@ def load_or_create(profile, day, mode, generate):
                                 VALUES (%s,%s,%s,%s,%s) RETURNING id, band_used, as_of""",
                              (profile["id"], day, mode, band, as_of)).fetchone()
             for position, action in enumerate(actions):
+                if action["id"] == "compare_motor_trip":
+                    example = commute_example(db, profile)
+                    if example is not None:
+                        action = {**action, "commute_example": example}
                 db.execute("INSERT INTO plan_items (id, plan_id, position, card) VALUES (%s,%s,%s,%s)",
                            (uuid4(), row[0], position, Jsonb(action)))
         items = db.execute("SELECT id, card, status FROM plan_items WHERE plan_id = %s ORDER BY position",
