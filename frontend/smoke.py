@@ -61,7 +61,7 @@ with sync_playwright() as playwright:
         "href", "https://www.epa.gov/system/files/documents/2023-08/APEX52_UsersGuide_Vol2_June2023.pdf"
     )
     expect(page.get_by_text("दोनों स्थितियों में अनुमानित मात्रा समान है।")).to_be_visible()
-    page.get_by_label("खिड़कियाँ", exact=True).select_option("open")
+    page.get_by_role("group", name="कमरे की स्थिति").get_by_role("combobox").select_option("open")
     page.get_by_role("button", name="तुलना करें").click()
     expect(page.get_by_text("22% अधिक PM2.5", exact=False)).to_be_visible()
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
