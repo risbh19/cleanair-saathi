@@ -57,6 +57,44 @@ class HouseholdTests(unittest.TestCase):
         finally:
             self.client.delete("/households/" + saved["id"], headers=self.headers)
 
+    def test_commute_example_uses_first_matching_trip_and_stays_saved(self):
+        trips = PROFILE["members"][0]["commutes"]
+        for travel_mode, vehicle in [("car", "petrol_hatchback_lt1000cc"), ("two_wheeler", "scooter_lt110cc")]:
+            profile = deepcopy(PROFILE)
+            profile["members"][0]["commutes"] += [
+                {**trips[0], "mode": travel_mode, "distance_km": 8},
+                {**trips[0], "mode": travel_mode, "distance_km": 20},
+            ]
+            saved = self.save(profile)
+            try:
+                def card():
+                    plan = self.client.get("/plan/today", headers=self.headers).json()
+                    return next(a for a in plan["actions"] if a["id"] == "compare_motor_trip")
+                action = card()
+                comparison = self.client.post("/simulate/commute", json={
+                    "distance_km": 8, "baseline": {"mode": vehicle}, "alternative": {"mode": "intracity_bus"},
+                }).json()
+                self.assertEqual(action["commute_example"], comparison)
+                self.assertGreater(comparison["co2_difference_g"], 0)
+                self.save(PROFILE)
+                self.client.post(f"/plan/items/{action['item_id']}/status", headers=self.headers,
+                                 json={"status": "done"})
+                self.assertEqual(card(), {**action, "status": "done"})
+            finally:
+                self.client.delete("/households/" + saved["id"], headers=self.headers)
+
+    def test_plan_keeps_motor_card_without_factor(self):
+        profile = deepcopy(PROFILE)
+        profile["members"][0]["commutes"][0]["mode"] = "car"
+        saved = self.save(profile)
+        try:
+            with patch("backend.app.plans.calculate_comparison", return_value=None):
+                plan = self.client.get("/plan/today", headers=self.headers).json()
+            card = next(a for a in plan["actions"] if a["id"] == "compare_motor_trip")
+            self.assertNotIn("commute_example", card)
+        finally:
+            self.client.delete("/households/" + saved["id"], headers=self.headers)
+
     def test_concurrent_plan_creation_and_owned_progress(self):
         saved = self.save(PROFILE)
         self.save(PROFILE, self.other)

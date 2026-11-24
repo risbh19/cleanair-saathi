@@ -51,21 +51,28 @@ def estimate(leg, km, factors):
                                 if exposure else None)}
 
 
-@router.post("/simulate/commute")
-def compare(inputs: Comparison):
-    try:
-        with connect() as db:
-            rows = db.execute("""SELECT mode, grams_co2_per_km, basis, vintage, source_url
-                                 FROM emission_factors WHERE mode IN (%s, %s)""",
-                              (inputs.baseline.mode, inputs.alternative.mode)).fetchall()
-    except OperationalError:
-        raise HTTPException(503, "Emission factor store unavailable") from None
+def calculate_comparison(db, inputs: Comparison):
+    rows = db.execute("""SELECT mode, grams_co2_per_km, basis, vintage, source_url
+                         FROM emission_factors WHERE mode IN (%s, %s)""",
+                      (inputs.baseline.mode, inputs.alternative.mode)).fetchall()
     factors = {mode: values for mode, *values in rows}
     if not {inputs.baseline.mode, inputs.alternative.mode} <= factors.keys():
-        raise HTTPException(503, "Emission factor unavailable")
+        return None
     base = estimate(inputs.baseline, inputs.distance_km, factors)
     alt = estimate(inputs.alternative, inputs.distance_km, factors)
     return {"distance_km": inputs.distance_km, "baseline": base, "alternative": alt,
             "co2_difference_g": base["trip_co2_g"] - alt["trip_co2_g"],
             "inhaled_difference_ug": (base["inhaled_pm25_ug"] - alt["inhaled_pm25_ug"]
                                       if inputs.baseline.exposure and inputs.alternative.exposure else None)}
+
+
+@router.post("/simulate/commute")
+def compare(inputs: Comparison):
+    try:
+        with connect() as db:
+            result = calculate_comparison(db, inputs)
+    except OperationalError:
+        raise HTTPException(503, "Emission factor store unavailable") from None
+    if result is None:
+        raise HTTPException(503, "Emission factor unavailable")
+    return result

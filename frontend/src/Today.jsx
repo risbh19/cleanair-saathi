@@ -444,10 +444,15 @@ function DailyPlan({ headers }) {
               <li key={action.id}>
                 <strong>{action[lang].title}</strong>
                 <p>{action[lang].step}</p>
+                {action.commute_example && (
+                  <CommuteImpact example={action.commute_example} />
+                )}
                 <label>
                   {t("Progress", "प्रगति")}{" "}
                   <select
-                    aria-label={t("Progress", "प्रगति") + " · " + action[lang].title}
+                    aria-label={
+                      t("Progress", "प्रगति") + " · " + action[lang].title
+                    }
                     value={action.status}
                     disabled={saving !== null}
                     onChange={(event) => update(action, event.target.value)}
@@ -463,5 +468,52 @@ function DailyPlan({ headers }) {
         </>
       )}
     </section>
+  );
+}
+
+function CommuteImpact({ example }) {
+  const t = useText();
+  const { baseline, alternative, distance_km, co2_difference_g } = example;
+  const number = (value) =>
+    value.toLocaleString(t("en-IN", "hi-IN"), { maximumSignificantDigits: 3 });
+  const vehicle =
+    baseline.mode === "petrol_hatchback_lt1000cc"
+      ? t(
+          "Petrol hatchback under 1,000 cc",
+          "1,000 सीसी से छोटी पेट्रोल हैचबैक",
+        )
+      : t("Scooter under 110 cc", "110 सीसी से छोटा स्कूटर");
+  return (
+    <details>
+      <summary>
+        {t("Example CO₂ difference", "उदाहरण में CO₂ का अंतर")} ·{" "}
+        {number(co2_difference_g)} g
+      </summary>
+      <p>
+        {t(
+          "One traveller, one way, at the first saved car or two-wheeler trip distance.",
+          "एक यात्री का एकतरफ़ा सफ़र, कार या दोपहिया के पहले दर्ज सफ़र की दूरी पर।",
+        )}
+      </p>
+      {[
+        [vehicle, baseline],
+        [t("City bus", "शहरी बस"), alternative],
+      ].map(([label, leg]) => (
+        <p key={leg.mode}>
+          {label} · {number(distance_km)} km × {leg.g_co2_per_passenger_km} g
+          CO₂/{t("passenger-km", "यात्री-किमी")} ≈ {number(leg.trip_co2_g)} g
+          CO₂.{" "}
+          <a href={leg.source_url}>
+            {t("Source", "स्रोत")} ({leg.vintage})
+          </a>
+        </p>
+      ))}
+      <p>
+        {t(
+          "The difference assumes replacing this trip with the bus. Marking the card done records progress only.",
+          "अंतर की गणना इस सफ़र की जगह बस लेने की मान्यता पर है। कार्ड पूरा करने पर केवल प्रगति दर्ज होती है।",
+        )}
+      </p>
+    </details>
   );
 }
