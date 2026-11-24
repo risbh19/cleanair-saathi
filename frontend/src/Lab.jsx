@@ -139,8 +139,42 @@ export default function Lab({ profile }) {
               "यह एक कमरे का उदाहरण मॉडल है जिसमें हवा पूरी तरह मिली हुई है। खाना पकाने और अन्य अंदरूनी स्रोतों को छोड़ दिया गया है।",
             )}
           </small>
+          <ModelAssumptions result={result} />
         </section>
       )}
     </section>
+  );
+}
+
+function ModelAssumptions({ result }) {
+  const t = useText();
+  const room = result.assumptions;
+  const rows = [
+    [t("Room dimensions", "कमरे का आकार"), `${room.floor_area_m2} m² × ${room.ceiling_height_m} m`],
+    [t("Windows", "खिड़कियाँ"), room.windows === "open" ? t("Open", "खुली") : t("Closed", "बंद")],
+    [t("Purifier CADR", "प्यूरिफ़ायर CADR"), `${room.purifier_cadr_m3_h} m³/h`],
+    [t("Outdoor PM2.5", "बाहर का PM2.5"), `${room.outdoor_pm25_ug_m3[0]} µg/m³ × ${room.outdoor_pm25_ug_m3.length} h`],
+    [t("Particle penetration fraction", "अंदर आने वाले कणों का अंश"), room.penetration_fraction],
+    [t("Air changes per hour (closed / open)", "प्रति घंटे हवा का बदलाव (बंद / खुली खिड़कियाँ)"), `${room.closed_air_changes_h} / ${room.open_air_changes_h}`],
+    [t("Particle deposition rate", "कणों के जमने की दर"), `${room.deposition_rate_h} /h`],
+    [t("Breathing rate", "साँस लेने की दर"), `${room.breathing_rate_m3_h} m³/h`],
+  ];
+  return (
+    <details>
+      <summary>{t("Model assumptions", "मॉडल की मान्यताएँ")}</summary>
+      <p>{t(
+        "The model assumes the room reaches equilibrium each hour. Air exchange, particle deposition and breathing rates are illustrative.",
+        "मॉडल मानता है कि हर घंटे कमरे में कणों की सांद्रता संतुलन पर पहुँचती है। हवा के बदलाव, कणों के जमने और साँस लेने की दरें उदाहरण के लिए हैं।",
+      )}</p>
+      <dl>
+        {rows.map(([label, value]) => (
+          <React.Fragment key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </React.Fragment>
+        ))}
+      </dl>
+      <a href={result.method_url}>{t("EPA model reference", "EPA मॉडल संदर्भ")}</a>
+    </details>
   );
 }
