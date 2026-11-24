@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import HourlyComparison from "./HourlyComparison";
 import { api, Field, Source, useText } from "./shared";
 
 export default function Lab({ profile }) {
@@ -155,6 +156,7 @@ export default function Lab({ profile }) {
               "यह एक कमरे का उदाहरण मॉडल है जिसमें हवा पूरी तरह मिली हुई है। खाना पकाने और अन्य अंदरूनी स्रोतों को छोड़ दिया गया है।",
             )}
           </small>
+          <HourlyComparison result={result} />
           <ModelAssumptions result={result} />
           <PurifierSizing result={result} />
         </section>
