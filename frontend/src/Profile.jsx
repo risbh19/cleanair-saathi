@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { api, Field, initial, member, useText } from "./shared";
+import { householdExamples } from "./householdExamples";
 
 const options = {
   home_type: [
@@ -43,6 +44,7 @@ export default function Profile({ saved, onSave, onDelete, headers }) {
     const { id, ...fields } = saved;
     return fields;
   });
+  const [example, setExample] = useState(null);
   const [step, move] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
@@ -155,6 +157,27 @@ export default function Profile({ saved, onSave, onDelete, headers }) {
                 {number("lon", t("Longitude", "देशांतर"), 77, 77.4)}
               </div>
             </>
+          )}
+          {step === 0 && !saved && (
+            <details>
+              <summary>{t("Start with an example household", "उदाहरण परिवार चुनें")}</summary>
+              <p>{t(
+                "Choose an example to fill in the home, members and trips. Review the details before saving.",
+                "घर, सदस्य और सफ़र की जानकारी भरने के लिए एक उदाहरण चुनें। सहेजने से पहले विवरण जाँचें।",
+              )}</p>
+              <div className="grid">
+                {householdExamples.map(({ en, hi, fields }) => (
+                  <button key={en} type="button" aria-pressed={example === en} onClick={() => {
+                    setDraft((old) => ({
+                      ...old, ...fields, locality: old.locality.trim() || "Central Delhi",
+                    }));
+                    setExample(en);
+                  }}>
+                    {t(en, hi)}
+                  </button>
+                ))}
+              </div>
+            </details>
           )}
           {step === 1 && (
             <div className="grid">
