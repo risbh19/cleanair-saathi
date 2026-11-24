@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { api, Language, useText } from "./shared";
+import OfflineDemo from "./OfflineDemo";
 import Community from "./Community";
 import Profile from "./Profile";
 import Today from "./Today";
@@ -43,6 +44,17 @@ function Dashboard({ lang, setLang }) {
       current = false;
     };
   }, [attempt]);
+  const [offline, setOffline] = useState(!navigator.onLine);
+  useEffect(() => {
+    function reconnect() { setOffline(false); }
+    function disconnect() { setOffline(true); }
+    window.addEventListener("online", reconnect);
+    window.addEventListener("offline", disconnect);
+    return () => {
+      window.removeEventListener("online", reconnect);
+      window.removeEventListener("offline", disconnect);
+    };
+  }, []);
   const pages = [
     ["today", t("Today", "आज")],
     ["community", t("Community", "समुदाय")],
@@ -77,6 +89,8 @@ function Dashboard({ lang, setLang }) {
         ))}
       </nav>
       <main>
+        {offline && page !== "demo" && <button onClick={() => go("demo")}>{t("Open offline demo", "ऑफ़लाइन डेमो खोलें")}</button>}
+        {page === "demo" && <OfflineDemo lang={lang} />}
         {page === "community" && <Community key={profile?.id || "guest"} profile={profile} headers={headers} />}
         {page === "today" && (
           <Today

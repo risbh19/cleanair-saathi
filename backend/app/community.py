@@ -1,6 +1,9 @@
 """Seven Delhi calendar dates of completed items, separated by data mode."""
 from datetime import datetime, timedelta, timezone
 
+from hashlib import sha256
+
+from pydantic import BaseModel, Field, UUID4
 from fastapi import APIRouter, Depends, Query, Request
 
 from .households import private_response, reload_profile, transaction
@@ -59,3 +62,34 @@ def example():
     counts = [2, 1, 3, 2, 4]
     return dict(locality="Demo Delhi", start=start, end=end, data_mode="demo",
                 summary=dict(households=len(counts), actions=sum(counts), modeled_co2_g=None, modeled_pm25_ug=None))
+
+
+class SchoolRun(BaseModel):
+    group_code: UUID4
+    departure: str = Field(pattern=r"^(?:[01][0-9]|2[0-3]):(?:00|15|30|45)$")
+
+
+@router.post("/community/school-run")
+def join_run(offer: SchoolRun, profile=Depends(reload_profile)):
+    """Opt-in matching inside an adult-organized group; return only an overlap flag."""
+    _, today = window()
+    household = profile["id"]
+    group = sha256(offer.group_code.bytes).digest()
+    hour, minute = map(int, offer.departure.split(":"))
+    slot = 4 * hour + minute // 15
+    with transaction() as db:
+        db.execute("DELETE FROM school_run_offers WHERE expires_on < %s", (today,))
+        db.execute("""INSERT INTO school_run_offers VALUES (%s,%s,lower(btrim(%s)),%s,%s)
+            ON CONFLICT (household_id) DO UPDATE SET group_digest=EXCLUDED.group_digest,
+            locality_key=EXCLUDED.locality_key, departure_slot=EXCLUDED.departure_slot,
+            expires_on=EXCLUDED.expires_on""", (household, group, profile["locality"], slot, today + timedelta(days=6)))
+        matched = db.execute("""SELECT EXISTS (SELECT FROM school_run_offers
+            WHERE group_digest=%s AND household_id<>%s AND locality_key=lower(btrim(%s))
+            AND departure_slot=%s AND expires_on >= %s)""", (group, household, profile["locality"], slot, today)).fetchone()[0]
+    return {"matched": matched, "expires_on": today + timedelta(days=6)}
+
+
+@router.delete("/community/school-run", status_code=204)
+def leave_run(profile=Depends(reload_profile)):
+    with transaction() as db:
+        db.execute("DELETE FROM school_run_offers WHERE household_id=%s", (profile["id"],))

@@ -19,3 +19,9 @@ Run `python -m unittest discover -s backend/tests -v` with `TEST_DATABASE_URL` p
 ### Optional Telegram morning brief
 
 Preview the public Delhi message with `python -m backend.app.morning_brief`. To deliver to your own opted-in chat, configure `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in the scheduler’s environment, then schedule `python -m backend.app.morning_brief --send` at your preferred morning time in Asia/Kolkata. Keep tokens out of the command line and source control. Delivery is disabled by default. The message includes source, timestamp, data mode and freshness.
+
+### Offline phone demo and school runs
+
+After the production build has loaded once and its service worker is active, disconnect the browser and open the offline demo. The bundled synthetic snapshot includes a 48-hour forecast, a checkable example plan and eight indoor comparisons produced by the Python engine. Regenerate it with `python -m scripts.offline_demo`. Offline demo changes stay in memory. Shared household records and community queries require the API.
+
+Adults can create a private school-run group code in Community and give it to known families. Each household opts in to one quarter-hour departure slot in its locality for seven days. The API returns only whether another household in that group chose the same locality and slot. Withdraw the offer to remove it immediately.

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import SchoolRun from "./SchoolRun";
 import { api, Field, useText } from "./shared";
 
 export default function Community({ profile, headers }) {
@@ -55,6 +56,7 @@ export default function Community({ profile, headers }) {
       </> : <p>{t("A digest appears once five households complete actions in this locality during the last seven days.",
         "पिछले सात दिनों में इस इलाके के पाँच परिवारों के काम पूरे करने पर सार दिखाई देगा।")}</p>}
     </section>}
+    {profile && <SchoolRun headers={headers} />}
     <small>{t("Impact figures compare modeled scenarios on completed cards. Completion records participation; actual savings are unmeasured.",
       "असर के आँकड़े पूरे किए गए कार्ड के मॉडल की तुलना हैं। काम पूरा करने से भागीदारी दर्ज होती है। वास्तविक बचत मापी नहीं गई है।")}</small>
   </section>;

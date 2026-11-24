@@ -39,6 +39,21 @@ class HouseholdTests(unittest.TestCase):
         self.assertEqual(result.status_code, 200, result.text)
         return result.json()
 
+    def test_school_run_requires_same_group_time_and_locality(self):
+        households = [(self.save(PROFILE, h), h) for h in (self.headers, self.other)]
+        self.addCleanup(lambda: [self.client.delete("/households/" + p["id"], headers=h) for p, h in households])
+        offer = {"group_code": str(uuid4()), "departure": "08:00"}
+        def join(headers, **changes):
+            response = self.client.post("/community/school-run", headers=headers, json=offer | changes)
+            response.raise_for_status()
+            return response.json()["matched"]
+        self.assertFalse(join(self.headers))
+        self.assertFalse(join(self.other, group_code=str(uuid4())))
+        self.assertFalse(join(self.other, departure="08:15"))
+        self.assertTrue(join(self.other))
+        self.client.delete("/community/school-run", headers=self.other).raise_for_status()
+        self.assertFalse(join(self.headers))
+
     def test_weekly_privacy_threshold_and_ownership(self):
         locality = "test-" + uuid4().hex
         participants = []

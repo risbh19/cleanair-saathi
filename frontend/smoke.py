@@ -138,5 +138,10 @@ with sync_playwright() as playwright:
                          .map(v => ({id:v.id, targets:v.nodes.map(n => n.target)}));
         }""")
         assert not findings, findings
+    page.evaluate("window.dispatchEvent(new Event('offline'))")
+    page.get_by_role("button", name="ऑफ़लाइन डेमो खोलें").click()
+    expect(page.get_by_role("heading", name="ऑफ़लाइन डेमो", exact=True)).to_be_visible()
+    page.get_by_text("48 घंटे का उदाहरण पूर्वानुमान", exact=True).click()
+    expect(page.get_by_role("listitem")).to_have_count(48)
     assert not errors, errors
     browser.close()

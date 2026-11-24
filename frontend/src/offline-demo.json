@@ -1,0 +1,319 @@
+{
+  "as_of": "2025-11-01T23:00:00+00:00",
+  "pm25": 150.0,
+  "actions": [
+    {
+      "id": "move_activity_indoors",
+      "en": {
+        "title": "Move strenuous activity indoors",
+        "step": "If outdoor exercise was planned, choose an indoor activity today."
+      },
+      "hi": {
+        "title": "मेहनत वाली गतिविधि घर के अंदर करें",
+        "step": "अगर बाहर व्यायाम करने का इरादा था, तो आज घर के अंदर कोई गतिविधि चुनें।"
+      }
+    },
+    {
+      "id": "review_sensitive_member_trip",
+      "en": {
+        "title": "Review essential trips together",
+        "step": "Check the air brief before a sensitive household member goes out. Postpone optional trips if possible."
+      },
+      "hi": {
+        "title": "ज़रूरी सफ़र पर साथ में विचार करें",
+        "step": "संवेदनशील सदस्य के बाहर जाने से पहले हवा की जानकारी देखें। हो सके तो गैरज़रूरी सफ़र टालें।"
+      }
+    },
+    {
+      "id": "check_purifier",
+      "en": {
+        "title": "Check the room purifier",
+        "step": "Check the filter indicator and follow the manufacturer’s maintenance instructions."
+      },
+      "hi": {
+        "title": "कमरे का प्यूरिफ़ायर जाँचें",
+        "step": "फ़िल्टर का संकेतक देखें और देखभाल के लिए निर्माता के निर्देश पढ़ें।"
+      }
+    },
+    {
+      "id": "compare_motor_trip",
+      "en": {
+        "title": "Compare a public transport route",
+        "step": "Check whether a bus or metro can replace one planned car or two-wheeler trip."
+      },
+      "hi": {
+        "title": "सार्वजनिक परिवहन का रास्ता देखें",
+        "step": "देखें कि कार या दोपहिया के किसी एक सफ़र के लिए बस या मेट्रो उपलब्ध है या नहीं।"
+      }
+    },
+    {
+      "id": "review_school_trip",
+      "en": {
+        "title": "Review the school journey",
+        "step": "Check the school’s travel and outdoor activity updates before leaving."
+      },
+      "hi": {
+        "title": "स्कूल के सफ़र की योजना देखें",
+        "step": "निकलने से पहले स्कूल की यात्रा और बाहरी गतिविधियों से जुड़े ताज़ा निर्देश देखें।"
+      }
+    },
+    {
+      "id": "avoid_roadside_wait",
+      "en": {
+        "title": "Choose where to wait",
+        "step": "Where practical, wait away from idling vehicles and busy traffic."
+      },
+      "hi": {
+        "title": "इंतज़ार की जगह चुनें",
+        "step": "जहाँ संभव हो, चालू इंजन वाले वाहनों और भारी यातायात से दूर इंतज़ार करें।"
+      }
+    },
+    {
+      "id": "combine_errands",
+      "en": {
+        "title": "Combine nearby errands",
+        "step": "Check which stops can be covered on the same trip."
+      },
+      "hi": {
+        "title": "आसपास के काम एक सफ़र में करें",
+        "step": "देखें कि एक ही सफ़र में किन जगहों के काम पूरे हो सकते हैं।"
+      }
+    }
+  ],
+  "simulations": [
+    {
+      "windows": "closed",
+      "cadr": 0,
+      "dose": 240.1777777777778
+    },
+    {
+      "windows": "closed",
+      "cadr": 100,
+      "dose": 54.22409414679468
+    },
+    {
+      "windows": "closed",
+      "cadr": 200,
+      "dose": 30.561982894047823
+    },
+    {
+      "windows": "closed",
+      "cadr": 300,
+      "dose": 21.27714181553044
+    },
+    {
+      "windows": "open",
+      "cadr": 0,
+      "dose": 294.0952380952381
+    },
+    {
+      "windows": "open",
+      "cadr": 100,
+      "dose": 169.52084039308713
+    },
+    {
+      "windows": "open",
+      "cadr": 200,
+      "dose": 119.08021899547731
+    },
+    {
+      "windows": "open",
+      "cadr": 300,
+      "dose": 91.77325261419924
+    }
+  ],
+  "forecast": [
+    {
+      "timestamp": "2025-11-02T00:00:00+00:00",
+      "pm25": 137.0
+    },
+    {
+      "timestamp": "2025-11-02T01:00:00+00:00",
+      "pm25": 136.0
+    },
+    {
+      "timestamp": "2025-11-02T02:00:00+00:00",
+      "pm25": 133.0
+    },
+    {
+      "timestamp": "2025-11-02T03:00:00+00:00",
+      "pm25": 127.0
+    },
+    {
+      "timestamp": "2025-11-02T04:00:00+00:00",
+      "pm25": 121.0
+    },
+    {
+      "timestamp": "2025-11-02T05:00:00+00:00",
+      "pm25": 112.0
+    },
+    {
+      "timestamp": "2025-11-02T06:00:00+00:00",
+      "pm25": 104.0
+    },
+    {
+      "timestamp": "2025-11-02T07:00:00+00:00",
+      "pm25": 95.0
+    },
+    {
+      "timestamp": "2025-11-02T08:00:00+00:00",
+      "pm25": 87.0
+    },
+    {
+      "timestamp": "2025-11-02T09:00:00+00:00",
+      "pm25": 80.0
+    },
+    {
+      "timestamp": "2025-11-02T10:00:00+00:00",
+      "pm25": 74.0
+    },
+    {
+      "timestamp": "2025-11-02T11:00:00+00:00",
+      "pm25": 71.0
+    },
+    {
+      "timestamp": "2025-11-02T12:00:00+00:00",
+      "pm25": 70.0
+    },
+    {
+      "timestamp": "2025-11-02T13:00:00+00:00",
+      "pm25": 71.0
+    },
+    {
+      "timestamp": "2025-11-02T14:00:00+00:00",
+      "pm25": 75.0
+    },
+    {
+      "timestamp": "2025-11-02T15:00:00+00:00",
+      "pm25": 81.0
+    },
+    {
+      "timestamp": "2025-11-02T16:00:00+00:00",
+      "pm25": 88.0
+    },
+    {
+      "timestamp": "2025-11-02T17:00:00+00:00",
+      "pm25": 97.0
+    },
+    {
+      "timestamp": "2025-11-02T18:00:00+00:00",
+      "pm25": 107.0
+    },
+    {
+      "timestamp": "2025-11-02T19:00:00+00:00",
+      "pm25": 116.0
+    },
+    {
+      "timestamp": "2025-11-02T20:00:00+00:00",
+      "pm25": 125.0
+    },
+    {
+      "timestamp": "2025-11-02T21:00:00+00:00",
+      "pm25": 132.0
+    },
+    {
+      "timestamp": "2025-11-02T22:00:00+00:00",
+      "pm25": 138.0
+    },
+    {
+      "timestamp": "2025-11-02T23:00:00+00:00",
+      "pm25": 142.0
+    },
+    {
+      "timestamp": "2025-11-03T00:00:00+00:00",
+      "pm25": 143.0
+    },
+    {
+      "timestamp": "2025-11-03T01:00:00+00:00",
+      "pm25": 142.0
+    },
+    {
+      "timestamp": "2025-11-03T02:00:00+00:00",
+      "pm25": 139.0
+    },
+    {
+      "timestamp": "2025-11-03T03:00:00+00:00",
+      "pm25": 133.0
+    },
+    {
+      "timestamp": "2025-11-03T04:00:00+00:00",
+      "pm25": 127.0
+    },
+    {
+      "timestamp": "2025-11-03T05:00:00+00:00",
+      "pm25": 118.0
+    },
+    {
+      "timestamp": "2025-11-03T06:00:00+00:00",
+      "pm25": 110.0
+    },
+    {
+      "timestamp": "2025-11-03T07:00:00+00:00",
+      "pm25": 101.0
+    },
+    {
+      "timestamp": "2025-11-03T08:00:00+00:00",
+      "pm25": 93.0
+    },
+    {
+      "timestamp": "2025-11-03T09:00:00+00:00",
+      "pm25": 86.0
+    },
+    {
+      "timestamp": "2025-11-03T10:00:00+00:00",
+      "pm25": 80.0
+    },
+    {
+      "timestamp": "2025-11-03T11:00:00+00:00",
+      "pm25": 77.0
+    },
+    {
+      "timestamp": "2025-11-03T12:00:00+00:00",
+      "pm25": 76.0
+    },
+    {
+      "timestamp": "2025-11-03T13:00:00+00:00",
+      "pm25": 77.0
+    },
+    {
+      "timestamp": "2025-11-03T14:00:00+00:00",
+      "pm25": 81.0
+    },
+    {
+      "timestamp": "2025-11-03T15:00:00+00:00",
+      "pm25": 87.0
+    },
+    {
+      "timestamp": "2025-11-03T16:00:00+00:00",
+      "pm25": 95.0
+    },
+    {
+      "timestamp": "2025-11-03T17:00:00+00:00",
+      "pm25": 103.0
+    },
+    {
+      "timestamp": "2025-11-03T18:00:00+00:00",
+      "pm25": 112.0
+    },
+    {
+      "timestamp": "2025-11-03T19:00:00+00:00",
+      "pm25": 122.0
+    },
+    {
+      "timestamp": "2025-11-03T20:00:00+00:00",
+      "pm25": 130.0
+    },
+    {
+      "timestamp": "2025-11-03T21:00:00+00:00",
+      "pm25": 138.0
+    },
+    {
+      "timestamp": "2025-11-03T22:00:00+00:00",
+      "pm25": 144.0
+    },
+    {
+      "timestamp": "2025-11-03T23:00:00+00:00",
+      "pm25": 148.0
+    }
+  ]
+}
