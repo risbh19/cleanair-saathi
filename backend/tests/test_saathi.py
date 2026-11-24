@@ -29,3 +29,10 @@ class SaathiTests(unittest.TestCase):
                     self.assertEqual(ranked[0]["id"], "move_activity_indoors")
                 with patch("backend.app.saathi.selection", return_value=["invented"]):
                     self.assertEqual(rank_plan(actions, band), actions)
+
+    @patch.dict("os.environ", {"LLM_MODE": "replay"})
+    def test_offline_replay_and_unknown_question(self):
+        result = answer(Question(question="फ़िल्टर कब बदलें?", language="hi"))
+        self.assertEqual(result["mode"], "replay")
+        self.assertTrue(result["citations"])
+        self.assertEqual(answer(Question(question="football score"))["mode"], "insufficient")

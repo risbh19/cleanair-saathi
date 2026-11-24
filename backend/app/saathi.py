@@ -1,5 +1,7 @@
 """Only return reviewed passages and eligible catalogue entries to the client."""
 from collections import deque
+from hashlib import sha256
+from pathlib import Path
 import json
 import os
 import re
@@ -14,6 +16,19 @@ from pydantic import BaseModel, Field
 router = APIRouter()
 EPA = "https://www.epa.gov/indoor-air-quality-iaq/guide-air-cleaners-home"
 SOURCES = {
+    "aqi": ("National Air Quality Index", "https://ies.gov.in/arthapedia/concept/national-air-quality-index",
+            ("aqi", "subindex", "एक्यूआई", "सूचकांक"),
+            "The national AQI combines pollutant subindices. The PM2.5 band on Today describes just the particulate component.",
+            "राष्ट्रीय AQI में अलग-अलग प्रदूषकों के उपसूचकांक शामिल हैं। आज की स्क्रीन पर PM2.5 श्रेणी सिर्फ़ इस कण प्रदूषक के लिए है।"),
+    "commute": ("India road transport emission factors",
+                "https://shaktifoundation.in/wp-content/uploads/2021/12/WRI-2015-India-Specific-Road-Transport-Emission-Factors.pdf",
+                ("emissions", "occupancy", "उत्सर्जन", "यात्री-किमी"),
+                "A trip estimate uses distance and a factor for the travel mode. For vehicle-based factors, sharing the vehicle changes the per-person estimate.",
+                "सफ़र के अनुमान में दूरी और वाहन के प्रकार का उत्सर्जन गुणक इस्तेमाल होता है। वाहन आधारित गुणक में सवारियों की संख्या बदलने से प्रति व्यक्ति अनुमान बदलता है।"),
+    "diy": ("EPA DIY air cleaner guide", "https://www.epa.gov/air-research/research-diy-air-cleaners-reduce-wildfire-smoke-indoors",
+            ("diy", "box fan", "बॉक्स फैन"),
+            "EPA describes a MERV 13 filter with a box fan. Its guide specifies a UL- or ETL-certified fan made in 2012 or later. Check the guide before considering a build.",
+            "EPA की गाइड में MERV 13 फ़िल्टर और बॉक्स फैन का उदाहरण है। गाइड 2012 या उसके बाद बना UL या ETL प्रमाणित पंखा बताती है। बनाने से पहले गाइड देखें।"),
     "size": ("CADR and room size", EPA, ("cadr", "size", "sizing", "क्षमता", "आकार"),
              "Match the purifier’s particle CADR to the room size. A higher ceiling increases the volume of air it serves.",
              "प्यूरिफ़ायर की कण हटाने की CADR कमरे के आकार के अनुसार चुनें। ऊँची छत वाले कमरे में हवा का आयतन अधिक होता है।"),
@@ -30,9 +45,29 @@ _lock = Lock()
 _calls = deque()
 
 
+def validate_ids(ids, choices):
+    if isinstance(ids, list) and all(isinstance(i, str) and i in choices for i in ids) and len(set(ids)) == len(ids):
+        return ids
+    return None
+
+
+def selection_key(task, choices, context):
+    data = json.dumps([task, choices, context], ensure_ascii=False, sort_keys=True).encode()
+    return sha256(data).hexdigest()
+
+
 def selection(task, choices, context):
+    mode = os.getenv("LLM_MODE", "reference")
+    if mode == "replay":
+        try:
+            path = Path(os.getenv("SAATHI_REPLAY_FILE", str(Path(__file__).parents[1] / "data/selection-replay.json")))
+            records = json.loads(path.read_text(encoding="utf-8"))
+            ids = records.get(selection_key(task, choices, context))
+            return validate_ids(ids, choices)
+        except (OSError, ValueError, AttributeError):
+            return None
     key = os.getenv("GEMINI_API_KEY")
-    if os.getenv("LLM_MODE") != "live" or not key:
+    if mode != "live" or not key:
         return None
     model = os.getenv("GEMINI_MODEL", "")
     if not re.fullmatch(r"[a-zA-Z0-9.-]+", model):
@@ -56,8 +91,7 @@ def selection(task, choices, context):
         with urlopen(req, timeout=4) as response:
             data = json.load(response)
         ids = json.loads(data["candidates"][0]["content"]["parts"][0]["text"])
-        if isinstance(ids, list) and all(isinstance(i, str) and i in choices for i in ids) and len(set(ids)) == len(ids):
-            return ids
+        return validate_ids(ids, choices)
     except (OSError, ValueError, KeyError, TypeError, IndexError):
         pass
     return None
@@ -98,4 +132,4 @@ def answer(query: Question):
         return refusal
     source = SOURCES[(selected or options)[0]]
     return {"answer": source[4 if hi else 3], "citations": [{"title": source[0], "url": source[1]}],
-            "mode": "model" if selected else "reference"}
+            "mode": os.getenv("LLM_MODE", "reference") if selected else "reference"}
