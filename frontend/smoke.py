@@ -1,5 +1,6 @@
 """Exercise the running fixture UI, API and database with a fresh browser session."""
 import os
+import re
 
 from playwright.sync_api import expect, sync_playwright
 
@@ -121,5 +122,12 @@ with sync_playwright() as playwright:
     expect(page.get_by_role("link", name="CAQM का आदेश पढ़ें")).to_have_attribute("href", "https://caqm.nic.in/test-order.pdf")
     expect(page.get_by_text("श्रेणी सीमा 401–500", exact=False)).to_be_visible()
     expect(page.get_by_role("link", name="CPCB की श्रेणी तालिका")).to_be_visible()
+    page.get_by_role("button", name="समुदाय", exact=True).click()
+    page.get_by_label("इलाका", exact=True).fill("Empty demo locality")
+    page.get_by_role("button", name="सार देखें").click()
+    expect(page.get_by_text("पाँच परिवारों", exact=False)).to_be_visible()
+    page.get_by_role("button", name="काल्पनिक उदाहरण देखें").click()
+    page.get_by_role("button", name="सार साझा करें").click()
+    expect(page.get_by_label("यह सार कॉपी करें")).to_have_value(re.compile("काल्पनिक परिवार.*12"))
     assert not errors, errors
     browser.close()

@@ -409,6 +409,12 @@ function DailyPlan({ headers }) {
               <li key={action.id}>
                 <strong>{action[lang].title}</strong>
                 <p>{action[lang].step}</p>
+                {action.indoor_example && <details><summary>
+                  {t("Modeled overnight dose difference", "रात की अनुमानित मात्रा का अंतर")} · {Number(action.indoor_example.avoided_inhaled_pm25_ug.toPrecision(2))} µg
+                </summary><p>{t("Eight hours at the plan’s outdoor PM2.5 level, closed windows, purifier on versus off.", "योजना के बाहरी PM2.5 स्तर पर आठ घंटे, बंद खिड़कियाँ, प्यूरिफ़ायर चालू और बंद होने की तुलना।")}</p>
+                <p>{action.indoor_example.assumptions.outdoor_pm25_ug_m3[0]} µg/m³ · {action.indoor_example.room_volume_m3.toFixed(1)} m³ · CADR {action.indoor_example.assumptions.purifier_cadr_m3_h} m³/h</p>
+                <a href={action.indoor_example.method_url}>{t("Model reference", "मॉडल संदर्भ")}</a></details>}
+                {!action.commute_example && !action.indoor_example && <small>{t("Impact has not been quantified for this action.", "इस काम के असर की मात्रा का अनुमान उपलब्ध नहीं है।")}</small>}
                 {action.commute_example && (
                   <CommuteImpact example={action.commute_example} />
                 )}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { api, Language, useText } from "./shared";
+import Community from "./Community";
 import Profile from "./Profile";
 import Today from "./Today";
 import Commute from "./Commute";
@@ -44,6 +45,7 @@ function Dashboard({ lang, setLang }) {
   }, [attempt]);
   const pages = [
     ["today", t("Today", "आज")],
+    ["community", t("Community", "समुदाय")],
     ["profile", t("Household", "परिवार")],
     ["lab", t("Indoor Lab", "घर की हवा")],
     ["commute", t("Commute", "सफ़र")],
@@ -75,6 +77,7 @@ function Dashboard({ lang, setLang }) {
         ))}
       </nav>
       <main>
+        {page === "community" && <Community key={profile?.id || "guest"} profile={profile} headers={headers} />}
         {page === "today" && (
           <Today
             headers={headers}
@@ -141,3 +144,7 @@ function App() {
   );
 }
 createRoot(document.getElementById("root")).render(<App />);
+
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}

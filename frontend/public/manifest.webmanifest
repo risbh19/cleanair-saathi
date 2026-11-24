@@ -1,0 +1,5 @@
+{
+  "name": "CleanAir Saathi", "short_name": "Saathi", "start_url": "/", "display": "standalone",
+  "background_color": "#ffffff", "theme_color": "#134b45",
+  "icons": [{"src": "/saathi.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}]
+}

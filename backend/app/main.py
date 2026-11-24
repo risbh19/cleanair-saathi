@@ -22,6 +22,7 @@ from .services.aqi import pm25_subindex
 from .services.stations import refresh_stations, station_summary
 from .services.weather import fetch_weather, parse_weather, weather_window
 from .engine.indoor import RoomScenario, simulate
+from .community import router as community_router
 from .brief import air_brief, load_csv
 from .services.forecast import HOUR, fetch_model, forecast, parse_model
 
@@ -92,6 +93,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="CleanAir Saathi", version="0.2.0", lifespan=lifespan)
+app.include_router(community_router)
 app.include_router(households_router)
 app.include_router(grap_router)
 app.include_router(plans_router)
@@ -217,7 +219,31 @@ def today_plan(request: Request, response: Response, profile=Depends(reload_prof
     response.headers["Cache-Control"] = "no-store"
     mode = request.app.state.mode
     day = utc_now().astimezone(timezone(timedelta(hours=5, minutes=30))).date()
-    return load_or_create(profile, day, mode, lambda: generate_plan(request, profile))
+    return load_or_create(profile, day, mode, lambda: plan_with_indoor_example(request, profile))
+
+
+def plan_with_indoor_example(request, profile):
+    band, as_of, actions = generate_plan(request, profile)
+    if not profile["purifier_cadr_m3h"] or as_of is None:
+        return band, as_of, actions
+    try:
+        brief = now(request, (profile["lat"], profile["lon"]))
+    except HTTPException as exc:
+        if exc.status_code != 503:
+            raise
+        brief = None
+    if brief and brief["as_of"] == as_of and (request.app.state.mode != "live" or not brief["stale"]):
+        outdoor = brief.get("hourly_pm25_ug_m3")
+        if (outdoor is not None and 0 <= outdoor <= 10000 and
+                profile["room_area_m2"] >= 1 and 1 <= profile["ceiling_m"] <= 15):
+            example = simulate(RoomScenario(floor_area_m2=profile["room_area_m2"],
+                               ceiling_height_m=profile["ceiling_m"], purifier_cadr_m3_h=profile["purifier_cadr_m3h"],
+                               outdoor_pm25_ug_m3=[outdoor] * 8))
+            for card in actions:
+                if card["id"] in ("compare_room_settings", "check_purifier"):
+                    card["indoor_example"] = example
+                    break
+    return band, as_of, actions
 
 
 def generate_plan(request, profile):

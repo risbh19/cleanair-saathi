@@ -39,6 +39,31 @@ class HouseholdTests(unittest.TestCase):
         self.assertEqual(result.status_code, 200, result.text)
         return result.json()
 
+    def test_weekly_privacy_threshold_and_ownership(self):
+        locality = "test-" + uuid4().hex
+        participants = []
+        self.addCleanup(lambda: [self.client.delete("/households/" + i, headers=h) for i, h in participants])
+        for i in range(5):
+            headers = token()
+            profile = deepcopy(PROFILE)
+            profile.update(locality=locality, purifier_cadr_m3h=150)
+            saved = self.save(profile, headers)
+            participants.append((saved["id"], headers))
+            plan = self.client.get("/plan/today", headers=headers).json()
+            card = next(c for c in plan["actions"] if "indoor_example" in c)
+            self.client.post("/plan/items/" + card["item_id"] + "/status", headers=headers, json={"status": "done"}).raise_for_status()
+            digest = self.client.get("/community/digest", params={"locality": locality.upper()}).json()["summary"]
+            if i < 4:
+                self.assertIsNone(digest)
+        self.assertEqual(digest["households"], 5)
+        self.assertEqual(digest["actions"], 5)
+        self.assertGreater(float(digest["modeled_pm25_ug"]), 0)
+        self.assertIsNone(digest["modeled_co2_g"])
+        self.assertEqual(self.client.get("/plan/week", headers=headers).json()["summary"]["actions"], 1)
+        self.assertEqual(self.client.get("/plan/week").status_code, 401)
+        self.client.delete("/households/" + saved["id"], headers=headers).raise_for_status()
+        self.assertIsNone(self.client.get("/community/digest", params={"locality": locality}).json()["summary"])
+
     def test_plan_uses_owned_household_and_handles_live_outage(self):
         saved = self.save(PROFILE)
         try:
