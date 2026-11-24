@@ -133,6 +133,7 @@ export default function Lab({ profile }) {
             {result.baseline_closed_no_purifier.inhaled_pm25_ug.toPrecision(2)}{" "}
             µg
           </p>
+          <DoseDifference percent={result.reduction_percent} />
           <small>
             {t(
               "Illustrative model of one well-mixed room. Cooking and other indoor sources are excluded.",
@@ -143,6 +144,32 @@ export default function Lab({ profile }) {
         </section>
       )}
     </section>
+  );
+}
+
+export function DoseDifference({ percent }) {
+  const t = useText();
+  if (percent === null || percent === 0) {
+    return <p>{t(
+      "Both scenarios have the same estimated dose.",
+      "दोनों स्थितियों में अनुमानित मात्रा समान है।",
+    )}</p>;
+  }
+  const amount = Math.abs(percent).toLocaleString(t("en-IN", "hi-IN"), {
+    maximumSignificantDigits: 2,
+  });
+  return (
+    <p>
+      {percent > 0
+        ? t(
+            `About ${amount}% less inhaled PM2.5 than in the closed, unfiltered room.`,
+            `बंद, बिना फ़िल्टर वाले कमरे की तुलना में साँस में लगभग ${amount}% कम PM2.5।`,
+          )
+        : t(
+            `About ${amount}% more inhaled PM2.5 than in the closed, unfiltered room.`,
+            `बंद, बिना फ़िल्टर वाले कमरे की तुलना में साँस में लगभग ${amount}% अधिक PM2.5।`,
+          )}
+    </p>
   );
 }
 
