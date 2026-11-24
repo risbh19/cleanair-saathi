@@ -28,7 +28,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: ["sh", "-ec", "python -m backend.db.migrate && exec uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"]
+    command: ["sh", "-ec", "python -m backend.db.migrate && exec uvicorn backend.app.main:app --no-access-log --host 0.0.0.0 --port 8000"]
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 15s

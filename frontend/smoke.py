@@ -1,5 +1,6 @@
 """Exercise the running fixture UI, API and database with a fresh browser session."""
 import os
+import re
 
 from playwright.sync_api import expect, sync_playwright
 
@@ -129,5 +130,26 @@ with sync_playwright() as playwright:
     expect(page.get_by_role("link", name="CAQM का आदेश पढ़ें")).to_have_attribute("href", "https://caqm.nic.in/test-order.pdf")
     expect(page.get_by_text("श्रेणी सीमा 401–500", exact=False)).to_be_visible()
     expect(page.get_by_role("link", name="CPCB की श्रेणी तालिका")).to_be_visible()
+    page.get_by_role("button", name="समुदाय", exact=True).click()
+    page.get_by_label("इलाका", exact=True).fill("Empty demo locality")
+    page.get_by_role("button", name="सार देखें").click()
+    expect(page.get_by_text("पाँच परिवारों", exact=False)).to_be_visible()
+    page.get_by_role("button", name="काल्पनिक उदाहरण देखें").click()
+    page.evaluate("Object.defineProperty(navigator, 'share', {value: undefined, configurable: true})")
+    page.get_by_role("button", name="सार साझा करें").click()
+    expect(page.get_by_label("यह सार कॉपी करें")).to_have_value(re.compile("काल्पनिक परिवार.*12"))
+    if axe_script := os.getenv("AXE_SCRIPT"):
+        page.add_script_tag(path=axe_script)
+        findings = page.evaluate("""async () => {
+            const result = await axe.run(document, {runOnly: {type: 'tag', values: ['wcag2a', 'wcag2aa']}});
+            return result.violations.filter(v => ['serious', 'critical'].includes(v.impact))
+                         .map(v => ({id:v.id, targets:v.nodes.map(n => n.target)}));
+        }""")
+        assert not findings, findings
+    page.evaluate("window.dispatchEvent(new Event('offline'))")
+    page.get_by_role("button", name="ऑफ़लाइन डेमो खोलें").click()
+    expect(page.get_by_role("heading", name="ऑफ़लाइन डेमो", exact=True)).to_be_visible()
+    page.get_by_text("48 घंटे का उदाहरण पूर्वानुमान", exact=True).click()
+    expect(page.get_by_role("listitem")).to_have_count(48)
     assert not errors, errors
     browser.close()

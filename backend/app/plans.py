@@ -34,9 +34,9 @@ def load_or_create(profile, day, mode, generate):
                          (profile["id"], day, mode)).fetchone()
         if row is None:
             band, as_of, actions = generate()
-            row = db.execute("""INSERT INTO daily_plans (household_id, plan_date, data_mode, band_used, as_of)
-                                VALUES (%s,%s,%s,%s,%s) RETURNING id, band_used, as_of""",
-                             (profile["id"], day, mode, band, as_of)).fetchone()
+            row = db.execute("""INSERT INTO daily_plans (household_id, plan_date, data_mode, band_used, as_of, locality_key)
+                                VALUES (%s,%s,%s,%s,%s,lower(btrim(%s))) RETURNING id, band_used, as_of""",
+                             (profile["id"], day, mode, band, as_of, profile["locality"])).fetchone()
             for position, action in enumerate(actions):
                 if action["id"] == "compare_motor_trip":
                     example = commute_example(db, profile)

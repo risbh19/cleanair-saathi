@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { api, Language, useText } from "./shared";
+import OfflineDemo from "./OfflineDemo";
+import Community from "./Community";
 import Profile from "./Profile";
 import Today from "./Today";
 import Commute from "./Commute";
@@ -43,8 +45,20 @@ function Dashboard({ lang, setLang }) {
       current = false;
     };
   }, [attempt]);
+  const [offline, setOffline] = useState(!navigator.onLine);
+  useEffect(() => {
+    function reconnect() { setOffline(false); }
+    function disconnect() { setOffline(true); }
+    window.addEventListener("online", reconnect);
+    window.addEventListener("offline", disconnect);
+    return () => {
+      window.removeEventListener("online", reconnect);
+      window.removeEventListener("offline", disconnect);
+    };
+  }, []);
   const pages = [
     ["today", t("Today", "आज")],
+    ["community", t("Community", "समुदाय")],
     ["profile", t("Household", "परिवार")],
     ["lab", t("Indoor Lab", "घर की हवा")],
     ["ask", t("Ask Saathi", "साथी से पूछें")],
@@ -77,6 +91,9 @@ function Dashboard({ lang, setLang }) {
         ))}
       </nav>
       <main>
+        {offline && page !== "demo" && <button onClick={() => go("demo")}>{t("Open offline demo", "ऑफ़लाइन डेमो खोलें")}</button>}
+        {page === "demo" && <OfflineDemo lang={lang} />}
+        {page === "community" && <Community key={profile?.id || "guest"} profile={profile} headers={headers} />}
         {page === "today" && (
           <Today
             headers={headers}
@@ -144,3 +161,7 @@ function App() {
   );
 }
 createRoot(document.getElementById("root")).render(<App />);
+
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
