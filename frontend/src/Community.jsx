@@ -44,7 +44,13 @@ export default function Community({ profile, headers }) {
     {error && <p role="alert">{t("Could not load the digest. Try again.", "सार नहीं मिला। फिर कोशिश करें।")}</p>}
     {digest && <section className="panel" role="status">
       {digest.summary ? <><p>{summary(digest)}</p>
-        <button onClick={() => setShare(true)}>{t("Share summary", "सार साझा करें")}</button>
+        <button onClick={async () => {
+          if (navigator.share) {
+            try { await navigator.share({ title: "CleanAir Saathi", text: summary(digest) }); return; }
+            catch (err) { if (err.name === "AbortError") return; }
+          }
+          setShare(true);
+        }}>{t("Share summary", "सार साझा करें")}</button>
         {share && <Field title={t("Copy this summary", "यह सार कॉपी करें")}><textarea readOnly value={summary(digest)} onFocus={e => e.target.select()} /></Field>}
       </> : <p>{t("A digest appears once five households complete actions in this locality during the last seven days.",
         "पिछले सात दिनों में इस इलाके के पाँच परिवारों के काम पूरे करने पर सार दिखाई देगा।")}</p>}

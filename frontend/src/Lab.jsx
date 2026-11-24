@@ -122,6 +122,8 @@ export default function Lab({ profile }) {
           </div>
           <Field title={t("Try purifier or DIY filter CADR (m³/h)", "प्यूरिफ़ायर या DIY फ़िल्टर की CADR आज़माएँ (m³/h)")}>
             <input type="range" min="0" max={Math.max(600, room.purifier_cadr_m3_h)} step="1"
+              onPointerUp={e => e.currentTarget.form.requestSubmit()}
+              onKeyUp={e => { if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)) e.currentTarget.form.requestSubmit(); }}
               value={room.purifier_cadr_m3_h || 0} onChange={e => edit("purifier_cadr_m3_h", Number(e.target.value))} />
           </Field>
           <small>{t("Use the measured CADR for your filter and fan setting.", "अपने फ़िल्टर और पंखे की सेटिंग के लिए मापी गई CADR भरें।")}{" "}

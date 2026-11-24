@@ -127,7 +127,16 @@ with sync_playwright() as playwright:
     page.get_by_role("button", name="सार देखें").click()
     expect(page.get_by_text("पाँच परिवारों", exact=False)).to_be_visible()
     page.get_by_role("button", name="काल्पनिक उदाहरण देखें").click()
+    page.evaluate("Object.defineProperty(navigator, 'share', {value: undefined, configurable: true})")
     page.get_by_role("button", name="सार साझा करें").click()
     expect(page.get_by_label("यह सार कॉपी करें")).to_have_value(re.compile("काल्पनिक परिवार.*12"))
+    if axe_script := os.getenv("AXE_SCRIPT"):
+        page.add_script_tag(path=axe_script)
+        findings = page.evaluate("""async () => {
+            const result = await axe.run(document, {runOnly: {type: 'tag', values: ['wcag2a', 'wcag2aa']}});
+            return result.violations.filter(v => ['serious', 'critical'].includes(v.impact))
+                         .map(v => ({id:v.id, targets:v.nodes.map(n => n.target)}));
+        }""")
+        assert not findings, findings
     assert not errors, errors
     browser.close()
