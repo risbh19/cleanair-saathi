@@ -22,6 +22,7 @@ from .services.aqi import pm25_subindex
 from .services.stations import refresh_stations, station_summary
 from .services.weather import fetch_weather, parse_weather, weather_window
 from .engine.indoor import RoomScenario, simulate
+from .request_limits import limit_expensive_routes
 from .community import router as community_router
 from .brief import air_brief, load_csv
 from .services.forecast import HOUR, fetch_model, forecast, parse_model
@@ -93,6 +94,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="CleanAir Saathi", version="0.2.0", lifespan=lifespan)
+app.middleware("http")(limit_expensive_routes)
 app.include_router(community_router)
 app.include_router(households_router)
 app.include_router(grap_router)

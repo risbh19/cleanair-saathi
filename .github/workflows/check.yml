@@ -45,6 +45,11 @@ jobs:
               assert client.get("/households/me").raise_for_status().json() == saved
               assert client.delete("/households/" + saved["id"]).status_code == 204
           PYTHON
+          db_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$(docker compose ps -q db)")
+          export TEST_DATABASE_URL="postgresql://cleanair:ci-test-password@${db_ip}/cleanair"
+          python -m pip install coverage==7.10.7
+          python -m coverage run --source=backend/app/engine -m unittest discover -s backend/tests -q
+          python -m coverage report --show-missing --fail-under=80
       - run: curl --fail http://localhost:8000/health
       - run: curl --fail 'http://localhost:8000/air/now?lat=28.61&lon=77.21'
       - name: Exercise the mobile fixture dashboard in Chrome
