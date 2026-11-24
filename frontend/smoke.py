@@ -66,6 +66,18 @@ with sync_playwright() as playwright:
     page.get_by_role("group", name="कमरे की स्थिति").get_by_role("combobox").select_option("open")
     page.get_by_role("button", name="तुलना करें").click()
     expect(page.get_by_text("22% अधिक PM2.5", exact=False)).to_be_visible()
+    page.get_by_role("checkbox", name="दिल्ली का घंटेवार पूर्वानुमान इस्तेमाल करें").check()
+    with (page.expect_response(lambda res: res.url.endswith("/air/forecast?hours=8")) as hourly,
+          page.expect_request(lambda req: req.url.endswith("/simulate/indoor")) as simulation):
+        page.get_by_role("button", name="तुलना करें").click()
+    forecast = hourly.value.json()
+    assert simulation.value.post_data_json["outdoor_pm25_ug_m3"] == [h["pm25_ug_m3"] for h in forecast["hours"]]
+    expect(page.get_by_text("डेमो · दिल्ली का कृत्रिम डेटा", exact=False)).to_be_visible()
+    forecast["hours"][0]["pm25_ug_m3"] = None
+    page.route("**/air/forecast?hours=8", lambda route: route.fulfill(json=forecast))
+    page.get_by_role("button", name="तुलना करें").click()
+    expect(page.get_by_role("alert")).to_contain_text("कुछ घंटों का पूर्वानुमान उपलब्ध नहीं है")
+    expect(page.get_by_role("heading", name="साँस में गया अनुमानित PM2.5")).to_have_count(0)
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
     page.get_by_role("button", name="परिवार", exact=True).click()
     expect(page.get_by_label("इलाका", exact=True)).to_have_value("Central Delhi")
