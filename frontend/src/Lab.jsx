@@ -141,6 +141,7 @@ export default function Lab({ profile }) {
             )}
           </small>
           <ModelAssumptions result={result} />
+          <PurifierSizing result={result} />
         </section>
       )}
     </section>
@@ -170,6 +171,25 @@ export function DoseDifference({ percent }) {
             `बंद, बिना फ़िल्टर वाले कमरे की तुलना में साँस में लगभग ${amount}% अधिक PM2.5।`,
           )}
     </p>
+  );
+}
+
+function PurifierSizing({ result }) {
+  const t = useText();
+  const format = (value) => value.toLocaleString(t("en-IN", "hi-IN"), {
+    maximumSignificantDigits: 3,
+  });
+  const volume = format(result.room_volume_m3);
+  const target = format(result.assumptions.target_clean_air_changes_h);
+  const cadr = format(result.cadr_for_target_m3_h);
+  return (
+    <section>
+      <h3>{t("Purifier sizing", "प्यूरिफ़ायर की क्षमता")}</h3>
+      <p>{t(
+        `For a room of ${volume} m³, the model target of ${target} clean air changes per hour requires a clean air delivery rate (CADR) of about ${cadr} m³/h.`,
+        `${volume} m³ के कमरे में हर घंटे ${target} बार कमरे के आयतन जितनी हवा साफ़ करने के लिए लगभग ${cadr} m³/h की स्वच्छ वायु आपूर्ति दर (CADR) चाहिए।`,
+      )}</p>
+    </section>
   );
 }
 
