@@ -36,3 +36,35 @@ class SaathiTests(unittest.TestCase):
         self.assertEqual(result["mode"], "replay")
         self.assertTrue(result["citations"])
         self.assertEqual(answer(Question(question="football score"))["mode"], "insufficient")
+
+    @patch.dict("os.environ", {"LLM_MODE": "live", "GEMINI_EMBEDDING_MODEL": "test"})
+    @patch("backend.app.saathi.retrieve", return_value=["filter"])
+    def test_semantic_candidate_needs_verified_selection(self, _):
+        q = Question(question="How should I maintain this device?")
+        with patch("backend.app.saathi.selection", return_value=None):
+            self.assertEqual(answer(q)["mode"], "insufficient")
+        with patch("backend.app.saathi.selection", return_value=["filter"]):
+            self.assertEqual(answer(q)["citations"][0]["title"], "Air cleaner filters")
+
+
+class RetrievalStoreTests(unittest.TestCase):
+    def test_index_and_search_in_pgvector(self):
+        import os
+        from backend.app.retrieval import prepare, retrieve
+        from backend.app.saathi import SOURCES
+        from backend.db.migrate import connect
+
+        url = os.getenv("TEST_DATABASE_URL")
+        if not url:
+            self.skipTest("requires disposable PostgreSQL with pgvector")
+        with patch.dict(os.environ, {"DATABASE_URL": url, "GEMINI_EMBEDDING_MODEL": "fixture", "GEMINI_API_KEY": "fixture"}):
+            with connect() as db:
+                if not db.execute("SELECT 1 FROM pg_available_extensions WHERE name='vector'").fetchone():
+                    self.skipTest("pgvector extension unavailable")
+            def vector(text, model, kind):
+                import json
+                first = int("CADR" in text)
+                return json.dumps([first, 1 - first] + [0] * 766)
+            with patch("backend.app.retrieval.embedding", side_effect=vector):
+                prepare(SOURCES)
+                self.assertIn("size", retrieve("CADR", SOURCES))
