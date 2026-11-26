@@ -103,7 +103,7 @@ Edit the relevant settings in `.env`, then run `docker compose up -d --wait` to 
 | `LLM_MODE=reference` or `replay` | Runs Ask Saathi and plan selection using reviewed content or bundled selection fixtures. |
 | `LLM_MODE=live` | Requires a server-side `GEMINI_API_KEY` and supported `GEMINI_MODEL`. Optional pgvector retrieval also requires an embedding model and index preparation. |
 
-[Gemini copilot setup](docs/gemini.md) · [Provider configuration and index preparation](docs/data-and-api.md#ask-saathi-and-plan-selection) · [Offline phone demo, school-run groups and optional Telegram delivery](RELEASE.md) · [Privacy and security](SECURITY.md)
+[Provider configuration and index preparation](docs/data-and-api.md#ask-saathi-and-plan-selection) · [Offline phone demo, school-run groups and optional Telegram delivery](RELEASE.md) · [Privacy and security](SECURITY.md)
 
 ## Development and tests
 

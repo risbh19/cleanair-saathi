@@ -1,17 +1,21 @@
 """Only return reviewed passages and eligible catalogue entries to the client."""
+from collections import deque
 from hashlib import sha256
 from pathlib import Path
 import json
 import os
 import re
+from threading import Lock
+from time import monotonic
 from typing import Literal
+from urllib.request import Request as URLRequest, urlopen
 
-from fastapi import HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from .retrieval import retrieve
-from .gemini import generate, provider_slot
 
+router = APIRouter()
 EPA = "https://www.epa.gov/indoor-air-quality-iaq/guide-air-cleaners-home"
 SOURCES = {
     "aqi": ("National Air Quality Index", "https://ies.gov.in/arthapedia/concept/national-air-quality-index",
@@ -38,6 +42,21 @@ SOURCES = {
                  "Open-Meteo provides hourly model forecasts from CAMS. A forecast describes a region and can differ from a nearby monitor.",
                  "Open-Meteo, CAMS मॉडल से घंटेवार पूर्वानुमान देता है। क्षेत्रीय अनुमान और पास के स्टेशन की रीडिंग में अंतर हो सकता है।"),
 }
+# A per-process ceiling bounds paid requests even when anonymous sessions rotate.
+_lock = Lock()
+_calls = deque()
+
+
+def provider_slot():
+    with _lock:
+        now = monotonic()
+        while _calls and _calls[0] <= now - 60:
+            _calls.popleft()
+        if len(_calls) >= 12:
+            return False
+        _calls.append(now)
+    return True
+
 
 def validate_ids(ids, choices):
     if isinstance(ids, list) and all(isinstance(i, str) and i in choices for i in ids) and len(set(ids)) == len(ids):
@@ -60,12 +79,30 @@ def selection(task, choices, context):
             return validate_ids(ids, choices)
         except (OSError, ValueError, AttributeError):
             return None
-    result = generate(json.dumps(context, ensure_ascii=False), system=task,
-                      schema={"type": "ARRAY", "items": {"type": "STRING", "enum": choices}})
-    try:
-        return validate_ids(json.loads(result.text), choices) if result else None
-    except (ValueError, AttributeError, TypeError):
+    key = os.getenv("GEMINI_API_KEY")
+    if mode != "live" or not key:
         return None
+    model = os.getenv("GEMINI_MODEL", "")
+    if not re.fullmatch(r"[a-zA-Z0-9.-]+", model):
+        return None
+    if not provider_slot():
+        return None
+    payload = {
+        "systemInstruction": {"parts": [{"text": task}]},
+        "contents": [{"parts": [{"text": json.dumps(context, ensure_ascii=False)}]}],
+        "generationConfig": {"responseMimeType": "application/json", "responseSchema": {
+            "type": "ARRAY", "items": {"type": "STRING", "enum": choices}}}
+    }
+    req = URLRequest(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                     data=json.dumps(payload).encode(), headers={"x-goog-api-key": key, "Content-Type": "application/json"})
+    try:
+        with urlopen(req, timeout=4) as response:
+            data = json.load(response)
+        ids = json.loads(data["candidates"][0]["content"]["parts"][0]["text"])
+        return validate_ids(ids, choices)
+    except (OSError, ValueError, KeyError, TypeError, IndexError):
+        pass
+    return None
 
 
 def rank_plan(actions, band):
@@ -84,7 +121,8 @@ class Question(BaseModel):
     language: Literal["en", "hi"] = "en"
 
 
-def reference_answer(query: Question):
+@router.post("/chat")
+def answer(query: Question):
     question = query.question.strip().casefold()
     if not question:
         raise HTTPException(422, "Enter a question")
@@ -108,8 +146,3 @@ def reference_answer(query: Question):
     source = SOURCES[(selected or lexical)[0]]
     return {"answer": source[4 if hi else 3], "citations": [{"title": source[0], "url": source[1]}],
             "mode": os.getenv("LLM_MODE", "reference") if selected else "reference"}
-
-
-def answer(query: Question):
-    """Public reference answer retained for callers and replay fixtures."""
-    return reference_answer(query)

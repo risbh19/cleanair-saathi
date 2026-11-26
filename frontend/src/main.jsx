@@ -101,7 +101,7 @@ function Dashboard({ lang, setLang }) {
             openProfile={() => go("profile")}
           />
         )}
-        {page === "ask" && <Ask key={`${lang}-${profile?.id || "guest"}`} lang={lang} headers={profile ? headers : null} />}
+        {page === "ask" && <Ask key={lang} lang={lang} />}
         {page === "commute" && <Commute />}
         {page === "lab" && (
           <Lab key={profile?.id ?? "anonymous"} profile={profile} />
