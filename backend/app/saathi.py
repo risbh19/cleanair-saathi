@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
 from .retrieval import retrieve
-from .gemini import generate, provider_slot
+from .gemini import generate
 
 EPA = "https://www.epa.gov/indoor-air-quality-iaq/guide-air-cleaners-home"
 SOURCES = {
@@ -97,7 +97,7 @@ def reference_answer(query: Question):
     if re.search(r"medicin|diagnos|treat|dose|दवा|इलाज|खुराक|ignore|अनदेखा", question):
         return refusal
     lexical = options
-    if os.getenv("LLM_MODE") == "live" and os.getenv("GEMINI_EMBEDDING_MODEL") and provider_slot():
+    if os.getenv("LLM_MODE") == "live" and os.getenv("GEMINI_EMBEDDING_MODEL"):
         options = list(dict.fromkeys(lexical + retrieve(question, SOURCES)))
     if not options:
         return refusal

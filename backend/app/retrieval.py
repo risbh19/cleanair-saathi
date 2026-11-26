@@ -1,13 +1,15 @@
-"""Optional semantic search over the reviewed bilingual reference library."""
+"""Optional thresholded search over the versioned reviewed bilingual library."""
 from hashlib import sha256
 import json
-from math import isfinite
+from math import isfinite, sqrt
 import os
 import re
-from urllib.request import Request, urlopen
 
+from google import genai
+from google.genai import types
 import psycopg
 from backend.db.migrate import connect
+from .gemini import provider_slot
 
 
 def model_name():
@@ -16,16 +18,20 @@ def model_name():
 
 
 def embedding(text, model, kind):
-    key = os.environ["GEMINI_API_KEY"]
-    body = {"model": "models/" + model, "content": {"parts": [{"text": text}]},
-            "outputDimensionality": 768, "taskType": kind}
-    req = Request(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:embedContent",
-                  data=json.dumps(body).encode(), headers={"x-goog-api-key": key, "Content-Type": "application/json"})
-    with urlopen(req, timeout=4) as response:
-        vector = json.load(response)["embedding"]["values"]
-    if len(vector) != 768 or not all(isinstance(x, (int, float)) and isfinite(x) for x in vector) or not any(vector):
+    if not provider_slot():
+        raise ValueError("Embedding request budget exhausted")
+    with genai.Client(api_key=os.environ["GEMINI_API_KEY"],
+                      http_options=types.HttpOptions(timeout=5000, retry_options=types.HttpRetryOptions(attempts=1))) as client:
+        result = client.models.embed_content(model=model, contents=text, config=types.EmbedContentConfig(
+            output_dimensionality=768, task_type=kind))
+    vector = result.embeddings[0].values
+    if len(vector) != 768 or not all(type(x) in (int, float) and isfinite(x) for x in vector) or not any(vector):
         raise ValueError("Invalid embedding")
-    return json.dumps(vector)
+    # gemini-embedding-001 requires normalization when reducing dimensions.
+    norm = sqrt(sum(x * x for x in vector))
+    if not isfinite(norm) or norm == 0:
+        raise ValueError("Invalid embedding norm")
+    return json.dumps([x / norm for x in vector])
 
 
 def library_version(sources):
@@ -37,6 +43,7 @@ def prepare(sources):
     if not model:
         raise ValueError("Set GEMINI_EMBEDDING_MODEL")
     version = library_version(sources)
+    # All remote work completes before opening the atomic index transaction.
     rows = [(model, version, key, embedding(" ".join((entry[0], entry[3], entry[4])), model, "RETRIEVAL_DOCUMENT"))
             for key, entry in sources.items()]
     with connect() as db:
@@ -55,14 +62,25 @@ def retrieve(question, sources):
         return []
     version = library_version(sources)
     try:
+        floor = float(os.getenv("RAG_SIMILARITY_MIN", "0.75"))
+        if not isfinite(floor) or not 0 <= floor <= 1:
+            return []
         with connect() as db:
             if not db.execute("SELECT to_regclass('saathi_passages')").fetchone()[0]:
                 return []
+            # Avoid spending query quota until the current source/model index exists.
+            if not db.execute("SELECT 1 FROM saathi_passages WHERE model=%s AND version=%s LIMIT 1",
+                              (model, version)).fetchone():
+                return []
             vector = embedding(question, model, "RETRIEVAL_QUERY")
-            rows = db.execute("""SELECT passage FROM saathi_passages WHERE model=%s AND version=%s
-                ORDER BY embedding <=> %s::vector LIMIT 3""", (model, version, vector)).fetchall()
-            return [row[0] for row in rows if row[0] in sources]
-    except (psycopg.Error, OSError, ValueError, KeyError, TypeError):
+            rows = db.execute("""SELECT passage, 1 - (embedding <=> %s::vector) AS similarity
+                FROM saathi_passages WHERE model=%s AND version=%s
+                AND 1 - (embedding <=> %s::vector) >= %s
+                ORDER BY embedding <=> %s::vector LIMIT 5""",
+                (vector, model, version, vector, floor, vector)).fetchall()
+            return [key for key, score in rows if key in sources and isfinite(score) and score >= floor]
+    except Exception:
+        # Missing extension/index, SDK quota and transport errors keep keyword lookup usable.
         return []
 
 

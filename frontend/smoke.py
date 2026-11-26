@@ -1,6 +1,8 @@
 """Exercise the running fixture UI, API and database with a fresh browser session."""
 import os
 import re
+from io import BytesIO
+from PIL import Image
 
 from playwright.sync_api import expect, sync_playwright
 
@@ -151,5 +153,31 @@ with sync_playwright() as playwright:
     expect(page.get_by_role("heading", name="ऑफ़लाइन डेमो", exact=True)).to_be_visible()
     page.get_by_text("48 घंटे का उदाहरण पूर्वानुमान", exact=True).click()
     expect(page.get_by_role("listitem")).to_have_count(48)
+    # Verify photo consent, reference fallback, and explicit CADR confirmation.
+    page.get_by_role("button", name="English", exact=True).click()
+    page.get_by_role("button", name="Indoor Lab", exact=True).click()
+    image = BytesIO()
+    Image.new("RGB", (32, 32), "white").save(image, "PNG")
+    page.get_by_label("Purifier or filter photo", exact=True).set_input_files(
+        {"name": "purifier.png", "mimeType": "image/png", "buffer": image.getvalue()})
+    photo_button = page.get_by_role("button", name="Analyze photo", exact=True)
+    expect(photo_button).to_be_disabled()
+    page.get_by_role("checkbox", name=re.compile("Allow this photo")).check()
+    with page.expect_response(lambda response: response.url.endswith("/purifier/analyze")) as photo_reply:
+        photo_button.click()
+    assert photo_reply.value.json()["mode"] == "reference"
+    expect(page.get_by_text("Photo analysis is unavailable.", exact=False)).to_be_visible()
+    cadr_input = page.get_by_label("Purifier CADR (m³/h)", exact=True)
+    before = cadr_input.input_value()
+    page.route("**/api/purifier/analyze", lambda route: route.fulfill(json={
+        "mode": "gemini", "observation": {"cadr_m3h": 200}, "requires_confirmation": True,
+        "guidance": ["Check the label."], "citations": []}))
+    photo_button.click()
+    confirm = page.get_by_role("button", name="I checked the label — use this CADR", exact=True)
+    expect(confirm).to_be_visible()
+    expect(cadr_input).to_have_value(before)
+    confirm.click()
+    expect(cadr_input).to_have_value("200")
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
     assert not errors, errors
     browser.close()

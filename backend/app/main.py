@@ -13,6 +13,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .copilot import plan_actions, router as saathi_router
+from .vision import router as vision_router
 from .grap import router as grap_router
 from .plans import load_or_create, router as plans_router
 from .engine.commute import router as commute_router
@@ -100,6 +101,7 @@ app.include_router(community_router)
 app.include_router(households_router)
 app.include_router(grap_router)
 app.include_router(saathi_router)
+app.include_router(vision_router)
 app.include_router(plans_router)
 app.include_router(commute_router)
 app.add_middleware(

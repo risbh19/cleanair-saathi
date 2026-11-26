@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PurifierPhoto from "./PurifierPhoto";
 import HourlyComparison from "./HourlyComparison";
 import { api, Field, Source, timeLabel, useText } from "./shared";
 
@@ -57,6 +58,7 @@ export default function Lab({ profile }) {
           "अपनी सेटिंग की तुलना उसी बंद कमरे से करें जिसमें फ़िल्टर नहीं है। बाहर के लिए एक सांद्रता मान या दिल्ली का घंटेवार पूर्वानुमान चुनें।",
         )}
       </p>
+      <PurifierPhoto onConfirm={cadr => edit("purifier_cadr_m3_h", cadr)} />
       <form onSubmit={run}>
         <fieldset disabled={busy}>
           <legend>{t("Room scenario", "कमरे की स्थिति")}</legend>

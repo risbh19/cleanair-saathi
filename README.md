@@ -131,3 +131,5 @@ python -m unittest discover -s backend/tests -v
 ```
 
 Database integration tests require `TEST_DATABASE_URL` pointing to a **disposable** PostgreSQL database. The pgvector integration test also needs the extension available. CI provisions the database, applies migrations, checks persistence across a restart, builds the dashboard and exercises the mobile flow in Chrome. See the [verification and demo guide](RELEASE.md) and [CI workflow](.github/workflows/check.yml).
+
+Optional [Gemini copilot, grounded retrieval and purifier photo analysis](docs/gemini.md) preserve reference mode and existing calculation engines.

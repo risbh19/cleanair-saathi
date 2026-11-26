@@ -11,6 +11,7 @@ from . import gemini
 from .engine.indoor import RoomScenario, simulate
 from .households import reload_profile, session_digest
 from .saathi import Question, SOURCES, reference_answer
+from .retrieval import retrieve
 
 router = APIRouter()
 
@@ -88,6 +89,8 @@ def execute_tool(name, args, request, profile, query):
         # The actual user question, never a model-supplied substitute, is searched.
         question = query.question.casefold()
         ids = [i for i, e in SOURCES.items() if any(re.search(r"\b" + re.escape(t), question) for t in e[2])]
+        if gemini.enabled():
+            ids = list(dict.fromkeys(ids + retrieve(query.question, SOURCES)))
         return {i: {"text": SOURCES[i][4 if hi else 3], "title": SOURCES[i][0], "url": SOURCES[i][1]} for i in ids}
     if name == "get_household_context":
         return {"household": household_context(profile)}

@@ -42,8 +42,23 @@ limits = RequestLimits()
 
 
 async def limit_expensive_routes(request: Request, call_next):
-    if request.url.path in {"/plan/today", "/chat"} and request.method in {"GET", "POST"}:
+    if request.url.path in {"/plan/today", "/chat", "/purifier/analyze"} and request.method in {"GET", "POST"}:
         if not limits.allow(request.client.host if request.client else "unknown", monotonic()):
             return JSONResponse({"detail": "Please try again in a minute"}, status_code=429,
                                 headers={"Retry-After": "60", "Cache-Control": "no-store"})
+    if request.url.path == "/purifier/analyze" and request.method == "POST":
+        maximum = 1500000
+        try:
+            length = int(request.headers.get("content-length", "0"))
+        except ValueError:
+            return JSONResponse({"detail": "Invalid content length"}, status_code=400)
+        if length > maximum:
+            return JSONResponse({"detail": "Photo request is too large"}, status_code=413)
+        chunks, size = [], 0
+        async for chunk in request.stream():
+            size += len(chunk)
+            if size > maximum:
+                return JSONResponse({"detail": "Photo request is too large"}, status_code=413)
+            chunks.append(chunk)
+        request._body = b"".join(chunks)
     return await call_next(request)
