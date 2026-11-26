@@ -152,4 +152,17 @@ class SDKWireTests(unittest.TestCase):
         self.assertNotIn("responseSchema", sent[0].get("generationConfig", {}))
         self.assertNotIn("tools", sent[1])
         self.assertEqual(sent[1]["generationConfig"]["responseMimeType"], "application/json")
+        self.assertNotIn("responseSchema", sent[1]["generationConfig"])
+        schema = sent[1]["generationConfig"]["responseJsonSchema"]
+        self.assertFalse(schema["additionalProperties"])
+        self.assertNotIn("additional_properties", json.dumps(schema))
         self.assertEqual(sent[1]["contents"][-1]["parts"][0]["functionResponse"]["id"], "call-1")
+
+
+class ProviderTimeoutTests(unittest.TestCase):
+    def test_configured_timeout_is_bounded_and_shared(self):
+        for value, expected in (("20000", 20000), ("999999", 30000), ("0", 1000), ("invalid", 15000)):
+            with patch.dict(os.environ, {"GEMINI_TIMEOUT_MS": value}):
+                self.assertEqual(gemini.http_options().timeout, expected)
+                self.assertEqual(retrieval.http_options().timeout, expected)
+                self.assertEqual(gemini.http_options().retry_options.attempts, 1)

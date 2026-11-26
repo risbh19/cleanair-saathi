@@ -34,9 +34,10 @@ server. IDs, uniqueness and time slots are validated. Severe-air indoor advice r
 priority and an anytime slot. Invalid output preserves the deterministic plan. The first plan for a date
 is persisted, so changing Gemini settings affects newly generated plans only.
 
-The SDK uses five-second timeouts, one attempt, 1,200 output tokens per generation,
-and a shared per-process ceiling of 12 provider requests per minute. Each chat can
-use two requests; plans use one. Multiple workers multiply that process ceiling.
+The SDK uses 15-second timeouts by default (`GEMINI_TIMEOUT_MS`, bounded to 1–30
+seconds), one attempt, 1,200 output tokens per generation,
+and a shared per-process ceiling of 12 provider requests per minute. A copilot attempt uses two generation requests; reference selection on fallback
+can add one request, and optional retrieval can add embeddings. Plans use one request. Multiple workers multiply that process ceiling.
 No live key is needed for unit tests: provider responses are mocked at the SDK boundary.
 
 References: [Google GenAI SDK](https://github.com/googleapis/python-genai),
@@ -99,3 +100,5 @@ PR 1 first, then retarget PR 2 to `main` before merging it. Neither is auto-merg
 Provider tests use mocked SDK outputs, including malformed responses, timeout/quota
 fallbacks, invented source IDs, invalid images and inconsistent CADR labels. CI also
 runs the existing PostgreSQL/pgvector integration check with fixture embeddings.
+
+Private `.env`, `.env.*`, `*.env`, `*.env.*` and `.envrc` files are excluded from Git and Docker build contexts, including the separate frontend build context. Only placeholder environment templates remain tracked. Never place provider keys in a `VITE_` variable or browser code.

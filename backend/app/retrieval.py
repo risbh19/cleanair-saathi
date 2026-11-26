@@ -9,7 +9,7 @@ from google import genai
 from google.genai import types
 import psycopg
 from backend.db.migrate import connect
-from .gemini import provider_slot
+from .gemini import http_options, provider_slot
 
 
 def model_name():
@@ -21,7 +21,7 @@ def embedding(text, model, kind):
     if not provider_slot():
         raise ValueError("Embedding request budget exhausted")
     with genai.Client(api_key=os.environ["GEMINI_API_KEY"],
-                      http_options=types.HttpOptions(timeout=5000, retry_options=types.HttpRetryOptions(attempts=1))) as client:
+                      http_options=http_options()) as client:
         result = client.models.embed_content(model=model, contents=text, config=types.EmbedContentConfig(
             output_dimensionality=768, task_type=kind))
     vector = result.embeddings[0].values

@@ -7,6 +7,7 @@ import re
 
 from google import genai
 from google.genai import types
+from pydantic import BaseModel
 
 _lock, _calls = Lock(), deque()
 
@@ -33,6 +34,14 @@ def model_name():
     return model
 
 
+def http_options():
+    try:
+        timeout = max(1000, min(30000, int(os.getenv("GEMINI_TIMEOUT_MS", "15000"))))
+    except ValueError:
+        timeout = 15000
+    return types.HttpOptions(timeout=timeout, retry_options=types.HttpRetryOptions(attempts=1))
+
+
 def generate(contents, *, system, schema=None, tools=None):
     if not enabled() or not provider_slot():
         return None
@@ -40,14 +49,17 @@ def generate(contents, *, system, schema=None, tools=None):
     if schema is not None and tools is not None:
         raise ValueError("Separate tools and structured output")
     try:
+        json_schema = (schema.model_json_schema()
+                       if isinstance(schema, type) and issubclass(schema, BaseModel) else None)
         config = types.GenerateContentConfig(
             system_instruction=system, temperature=0, max_output_tokens=1200,
             response_mime_type="application/json" if schema is not None else None,
-            response_schema=schema, tools=tools,
+            response_schema=schema if json_schema is None else None,
+            response_json_schema=json_schema, tools=tools,
             automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         )
         with genai.Client(api_key=os.environ["GEMINI_API_KEY"],
-                          http_options=types.HttpOptions(timeout=5000, retry_options=types.HttpRetryOptions(attempts=1))) as client:
+                          http_options=http_options()) as client:
             return client.models.generate_content(model=model_name(), contents=contents, config=config)
     except Exception:
         # SDK transport, quota, blocked responses and model errors share the offline path.
