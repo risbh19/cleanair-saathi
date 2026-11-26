@@ -408,6 +408,7 @@ function DailyPlan({ headers }) {
             {plan.data.actions.map((action) => (
               <li key={action.id}>
                 <strong>{action[lang].title}</strong>
+                {action.time_of_day && <small> · {({morning: t("Morning", "सुबह"), afternoon: t("Afternoon", "दोपहर"), evening: t("Evening", "शाम"), anytime: t("Any time", "कभी भी")})[action.time_of_day]}</small>}
                 <p>{action[lang].step}</p>
                 {action.indoor_example && <details><summary>
                   {t("Modeled overnight dose difference", "रात की अनुमानित मात्रा का अंतर")} · {Number(action.indoor_example.avoided_inhaled_pm25_ug.toPrecision(2))} µg

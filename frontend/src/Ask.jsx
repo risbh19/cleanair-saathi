@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { api, Field, useText } from "./shared";
 
-export default function Ask({ lang }) {
+export default function Ask({ lang, headers }) {
   const t = useText();
   const [question, edit] = useState("");
   const [messages, setMessages] = useState([]);
@@ -36,7 +36,7 @@ export default function Ask({ lang }) {
     setBusy(true);
     setError(false);
     try {
-      const reply = await api("/chat", { method: "POST", headers: { "Content-Type": "application/json" },
+      const reply = await api("/chat", { method: "POST", headers: { ...headers, "Content-Type": "application/json" },
         body: JSON.stringify({ question, language: lang }) });
       setMessages((old) => [...old, { question, ...reply }]);
       edit("");
@@ -48,7 +48,7 @@ export default function Ask({ lang }) {
   }
   return <section>
     <h1>{t("Ask Saathi", "साथी से पूछें")}</h1>
-    <p>{t("Ask about filters, air forecasts, AQI or commute emissions.", "फ़िल्टर, हवा के पूर्वानुमान, AQI या सफ़र के उत्सर्जन के बारे में पूछें।")}</p>
+    <p>{t("Ask about your room, filters, air forecasts, AQI or commute emissions.", "फ़िल्टर, हवा के पूर्वानुमान, AQI या सफ़र के उत्सर्जन के बारे में पूछें।")}</p>
     <small>{t("In live mode your question is sent to Google. Leave out personal details.", "लाइव मोड में आपका सवाल Google को भेजा जाता है। व्यक्तिगत जानकारी न लिखें।")}</small>
     <div aria-live="polite">{messages.map((m, i) => <article className="panel" key={i}>
       <strong>{m.question}</strong><p>{m.answer}</p>
