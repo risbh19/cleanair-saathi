@@ -3,13 +3,13 @@ import os
 from copy import deepcopy
 from types import SimpleNamespace as NS
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from google.genai import types
 
 from backend.app import gemini
-from backend.app.copilot import household_context, live_answer, plan_actions, optional_profile
+from backend.app.copilot import household_context, live_answer, plan_actions
 from backend.app.engine.actions import daily_actions
 from backend.app.main import app
 from backend.app.saathi import Question
@@ -21,7 +21,7 @@ def response(data):
 
 
 def call_response(*names):
-    parts = [types.Part(function_call=types.FunctionCall(name=n, args={})) for n in names]
+    parts = [types.Part(function_call=types.FunctionCall(name=n, args={}, id="call-" + n)) for n in names]
     content = types.Content(role="model", parts=parts)
     return NS(function_calls=[p.function_call for p in parts], candidates=[NS(content=content)])
 
@@ -43,7 +43,7 @@ class CopilotTests(unittest.TestCase):
         self.assertEqual(plan[0]["id"], "move_activity_indoors")
         self.assertEqual({a["id"] for a in plan}, {a["id"] for a in actions})
         self.assertEqual(plan[0]["en"], actions[0]["en"])
-        self.assertEqual(plan[0]["time_of_day"], "evening")
+        self.assertEqual(plan[0]["time_of_day"], "anytime")
         self.assertIn("schema", generate.call_args.kwargs)
         for items in ([{"action_id": "invented", "time_of_day": "morning"}],
                       [{"action_id": actions[0]["id"], "time_of_day": "evening"}] * len(actions),
@@ -66,6 +66,7 @@ class CopilotTests(unittest.TestCase):
             contents = generate.call_args.args[0]
             self.assertEqual(contents[1], first.candidates[0].content)
             self.assertEqual(contents[2].parts[0].function_response.name, "search_reviewed_sources")
+            self.assertEqual(contents[2].parts[0].function_response.id, "call-search_reviewed_sources")
 
     def test_unknown_tool_and_fabricated_citation_fail_closed(self):
         with patch.object(gemini, "generate", return_value=call_response("delete_household")):
@@ -99,3 +100,14 @@ class CopilotTests(unittest.TestCase):
             self.assertIsNone(gemini.generate("question", system="test"))
         with patch.object(gemini, "provider_slot", return_value=False):
             self.assertIsNone(gemini.generate("question", system="test"))
+
+    def test_room_tool_uses_saved_profile_and_blocks_stale_live_air(self):
+        from backend.app.copilot import execute_tool
+        brief = {"hourly_pm25_ug_m3": 100, "data_mode": "live", "stale": False}
+        with patch("backend.app.copilot.air_context", return_value=brief):
+            result = execute_tool("simulate_household_room", {}, None, PROFILE, Question(question="room?"))
+            self.assertEqual(result["simulation"]["room_volume_m3"], 12 * 2.7)
+            self.assertEqual(result["simulation"]["assumptions"]["purifier_cadr_m3_h"], 0)
+        with patch("backend.app.copilot.air_context", return_value=brief | {"stale": True}):
+            self.assertEqual(execute_tool("simulate_household_room", {}, None, PROFILE, Question(question="room?")), {"unavailable": True})
+        self.assertEqual(execute_tool("simulate_household_room", {}, None, None, Question(question="room?")), {"unavailable": True})

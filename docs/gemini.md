@@ -31,7 +31,7 @@ from the requesting token; models cannot request another household. No history i
 Daily plans use Pydantic structured output to schedule and order all eligible action
 IDs for the household and air band. Catalogue text and engine calculations stay on the
 server. IDs, uniqueness and time slots are validated. Severe-air indoor advice retains
-priority. Invalid output preserves the deterministic plan. The first plan for a date
+priority and an anytime slot. Invalid output preserves the deterministic plan. The first plan for a date
 is persisted, so changing Gemini settings affects newly generated plans only.
 
 The SDK uses five-second timeouts, one attempt, 1,200 output tokens per generation,

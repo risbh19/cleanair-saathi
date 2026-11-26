@@ -67,7 +67,7 @@ def plan_actions(actions, band, profile, brief):
         items = order.items
         if band in {"Very poor", "Severe"}:
             items = sorted(items, key=lambda i: i.action_id != "move_activity_indoors")
-        return [{**by_id[i.action_id], "time_of_day": i.time_of_day, "planner_mode": "gemini"} for i in items]
+        return [{**by_id[i.action_id], "time_of_day": "anytime" if band in {"Very poor", "Severe"} and i.action_id == "move_activity_indoors" else i.time_of_day, "planner_mode": "gemini"} for i in items]
     except (ValueError, TypeError, AttributeError):
         return actions
 
@@ -145,7 +145,7 @@ def live_answer(query, request, profile):
             return None
         result = execute_tool(call.name, call.args, request, profile, query)
         results[call.name] = result
-        parts.append(types.Part.from_function_response(name=call.name, response=result))
+        parts.append(types.Part(function_response=types.FunctionResponse(name=call.name, response=result, id=call.id)))
     # Preserve the model's complete content, including any thought signatures.
     contents += [first.candidates[0].content, types.Content(role="user", parts=parts)]
     final = gemini.generate(contents, schema=EvidenceChoice, system="Select only evidence from the returned tools "
@@ -164,10 +164,13 @@ def live_answer(query, request, profile):
         if choice.include_air and air and air.get("hourly_pm25_ug_m3") is not None:
             paragraphs.append(("दिल्ली PM2.5" if hi else "Delhi PM2.5") + f': {air["hourly_pm25_ug_m3"]} µg/m³ · {air["as_of"]} · {air["data_mode"]} · ' +
                 (("पुराना डेटा" if hi else "older data") if air.get("stale") else ("ताज़ा डेटा" if hi else "current data")))
+        if choice.include_air and air and air.get("source_url"):
+            citations.append({"id": "air-feed", "title": air["source"], "url": air["source_url"]})
         if choice.include_room and room:
             value = room["selected"]["inhaled_pm25_ug"]
             paragraphs.append(("आपके कमरे में मॉडल के अनुसार 8 घंटे की मात्रा" if hi else "Modeled 8-hour inhaled PM2.5 in your room") +
                               f': {value:.2g} µg. ' + ("यह उदाहरण है, माप नहीं।" if hi else "Illustrative estimate, not a measurement."))
+            citations.append({"id": "indoor-model", "title": "EPA indoor exposure model", "url": room["method_url"]})
         commute = results.get("compare_household_commute", {}).get("commute")
         if choice.include_commute and commute:
             paragraphs.append(("सफ़र का मॉडल CO₂ अंतर" if hi else "Modeled trip CO₂ difference") +
