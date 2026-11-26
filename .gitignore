@@ -1,4 +1,11 @@
+# Private environment files; keep only placeholder templates
 .env
+.env.*
+*.env
+*.env.*
+.envrc
+!.env.example
+!*.env.example
 .venv/
 .deps/
 __pycache__/

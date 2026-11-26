@@ -1,2 +1,13 @@
+.git
 node_modules
 dist
+.env
+.env.*
+*.env
+*.env.*
+.envrc
+**/.env
+**/.env.*
+**/*.env
+**/*.env.*
+**/.envrc
