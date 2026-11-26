@@ -1,113 +1,144 @@
 # CleanAir Saathi
 
-CleanAir Saathi helps a Delhi household turn an air-quality forecast into a daily plan. Set up a household, compare room and commute choices, ask a question in Hindi or English, and track completed actions. Each air reading shows its source and timestamp. The PM2.5 band describes the particulate component of AQI. Exposure and CO₂ figures are modeled comparisons.
+**Household air-quality decisions, explained.**
 
-**[Watch the captioned app walkthrough (MP4)](docs/cleanair-walkthrough.mp4)**
+[![Check](https://github.com/risbh19/cleanair-saathi/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/risbh19/cleanair-saathi/actions/workflows/check.yml)
+![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![React 19](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
+![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 
-![Today dashboard showing the synthetic Delhi reading of 150 µg/m³, its Very poor band and source timestamp](docs/screenshots/today.png)
+CleanAir Saathi helps Delhi households understand local air conditions, choose practical daily actions, and compare indoor and travel scenarios. It brings air-quality information, household context, calculation engines, and cited guidance into one bilingual dashboard.
 
-[Local deployment](#local-deployment) · [Walkthrough](#walkthrough) · [Data modes](#data-modes-and-optional-services) · [Development and tests](#development-and-tests) · [Data and API reference](docs/data-and-api.md)
+![CleanAir Saathi home dashboard showing a synthetic Delhi PM2.5 reading, its source and timestamp, and the recorded GRAP status](docs/screenshots/today.png)
 
-## Local deployment
+*Home dashboard in fixture mode. The displayed 150 µg/m³ reading is synthetic demonstration data.*
 
-Use **Git and Docker Compose v2**. On Windows, start Docker Desktop and open PowerShell in the folder where you keep projects. Compose runs all three services: the React dashboard served by nginx, the FastAPI backend and PostgreSQL with pgvector. The default demo works without external API keys after the images have been built.
+[Overview](#overview) · [Capabilities](#capabilities) · [Architecture](#architecture) · [Quick start](#quick-start) · [AI and data modes](#ai-and-data-modes) · [Development](#development)
 
-**1. Clone the repository.** If you already have a checkout, open its root directory instead. It contains `compose.yaml`.
+## Overview
+
+A pollution reading becomes useful when a household can connect it to everyday choices: where to spend time, how to use a purifier, and how different travel options compare.
+
+CleanAir Saathi supports these decisions through three connected parts:
+
+- **Understand the conditions.** View current PM2.5, a 48-hour forecast, weather information, source timestamps, and recorded GRAP orders.
+- **Compare practical choices.** Use household details to select daily actions, estimate indoor exposure under different room settings, and compare commute emissions.
+- **Keep track.** Save action progress, view a private weekly summary, and access locality summaries subject to participation thresholds.
+
+Daily action eligibility uses the household profile and current PM2.5 band. Forecasts are available separately and can supply hourly outdoor concentrations to Indoor Lab.
+
+## Capabilities
+
+| Capability | What it provides |
+|---|---|
+| Air and weather dashboard | Current PM2.5, its component sub-index band, a 24-hour mean when enough observations exist, hourly forecasts, and freshness indicators |
+| Household profiles | Room dimensions, purifier CADR, cooking fuel, household members, sensitivity flags, and commute details |
+| Daily action plans | Up to seven eligible actions from a reviewed bilingual catalogue, persisted by household, Delhi date, and data mode |
+| Indoor Air Lab | A room model comparing selected settings with a closed, unfiltered baseline, including estimated inhaled PM2.5 and purifier sizing |
+| Commute comparisons | Per-passenger CO₂ estimates for supported car, scooter, auto-rickshaw, and bus scenarios using stored India-specific factors |
+| Ask Saathi | Hindi and English answers from reviewed passages, with citations or an explicit insufficient-evidence response |
+| Community progress | Private weekly activity, locality summaries with a five-household minimum, and opt-in school-run matching |
+| Offline access | A cached application shell and a bundled, explicitly labelled example dataset |
+
+The interface supports **English and Hindi**. GRAP orders are entered by an operator through a protected endpoint, with the effective order and source shown in the dashboard.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    UI["React dashboard"] --> WEB["nginx static server and API proxy"]
+    WEB --> API["FastAPI backend"]
+    API --> ENG["Air, indoor, commute and action engines"]
+    API --> DB[("PostgreSQL and pgvector")]
+    API -.-> EXT["Optional Open-Meteo, OpenAQ and Gemini integrations"]
+```
+
+| Layer | Technology | Responsibility |
+|---|---|---|
+| Interface | React 19, Vite 7, service worker | Dashboard, bilingual forms, comparison charts, and offline shell |
+| Application | Python 3.12, FastAPI, Pydantic, Uvicorn | API routes, validation, household authorization, and calculation engines |
+| Storage | PostgreSQL 16, pgvector, psycopg | Profiles, plans, progress, emission factors, GRAP orders, and optional passage embeddings |
+| Delivery | Docker Compose, nginx | Local service orchestration, static assets, and API proxying |
+| Verification | unittest, Playwright, axe-core, GitHub Actions | Backend checks, database integration, mobile browser flows, and accessibility checks |
+
+Air and weather snapshots are cached in process. Household and plan data persist in PostgreSQL. The browser stores an anonymous session token and language preference.
+
+## Quick start
+
+Install **Git** and **Docker with Compose v2**. On Windows, start Docker Desktop before running the commands below.
 
 ```sh
 git clone https://github.com/risbh19/cleanair-saathi.git
 cd cleanair-saathi
-docker compose version
 ```
 
-**2. Create the local configuration.** On the first run, copy the example and open the copy. On Windows PowerShell:
+Create the local configuration:
 
 ```powershell
+# Windows PowerShell
 Copy-Item .env.example .env
 notepad .env
 ```
 
-On macOS or Linux, run `cp .env.example .env` and open `.env` in your editor. Replace the example value of `POSTGRES_PASSWORD` with a password you choose **before the first start**. Keep `DATA_MODE=fixture` for the walkthrough. Keep the same password when restarting an existing database volume.
+```sh
+# macOS or Linux
+cp .env.example .env
+```
 
-**3. Build, start and check the stack.** These commands work in PowerShell, bash and zsh.
+Set `POSTGRES_PASSWORD` to a local password before the first start. Keep `DATA_MODE=fixture` to use the bundled example data. Retain the same password when restarting an existing database volume, and keep `.env` out of version control.
 
 ```sh
 docker compose up --build --wait
 docker compose ps
 ```
 
-Open the [dashboard](http://localhost:5173), the [interactive API docs](http://localhost:8000/docs) or the [health endpoint](http://localhost:8000/health). The health response for this setup is:
-
-```json
-{"status":"ok","data_mode":"fixture"}
-```
-
-**4. Stop and resume.** Run `docker compose down` to stop the services and keep the database volume. Run `docker compose up -d --wait` to resume. Open the same browser and dashboard address to return to the anonymous household. The browser holds its access token, while PostgreSQL holds its profile and plans.
-
-| If you see this | What to check |
+| Service | Address |
 |---|---|
-| Docker cannot connect to its daemon | Start Docker Desktop or the Docker Engine, then run `docker info`. |
-| Compose asks for `POSTGRES_PASSWORD` | Check that the file is named `.env`, is next to `compose.yaml`, and has a non-empty password. |
-| Port 5173 or 8000 is already allocated | Stop the other local process using that port and rerun Compose. |
-| A service stays unhealthy | Run `docker compose ps -a` and `docker compose logs --tail=80 db backend frontend`. For an existing volume, verify that the database password matches the one used at initialization. |
+| Dashboard | [localhost:5173](http://localhost:5173) |
+| Interactive API documentation | [localhost:8000/docs](http://localhost:8000/docs) |
+| Health endpoint | [localhost:8000/health](http://localhost:8000/health) |
 
-## Walkthrough
+The services bind to the local machine. Run `docker compose down` to stop the stack while retaining its database volume, or `docker compose up -d --wait` to resume it. The default fixture setup needs no external API keys after the images have been built.
 
-The screenshots below come from a running local app using **synthetic Delhi air data** and the bundled reference answers. Start on **Today** to see the timestamp, source, PM2.5 band and 48-hour outlook. Use the language button in the header to switch between English and Hindi.
+## AI and data modes
 
-### 1. Create a household
-
-Open **Household → Start with an example household → Family with a toddler and grandparent**. Choose **Continue** to review the room and purifier, then continue to members and commutes. Select **Save household**. You can edit any example field before saving.
-
-![Household setup with the three selectable examples and editable locality and coordinates](docs/screenshots/household.png)
-
-### 2. Follow the daily plan
-
-On **Today**, scroll to **Household action plan**. Expand a modeled comparison to inspect its assumptions. Set one action’s **Progress** to **Done**; the completion count updates and survives a reload. The first plan for a household is saved per Delhi date and data mode.
-
-![Daily plan for the example household, with one completed action and expandable impact estimates](docs/screenshots/daily-plan.png)
-
-### 3. Compare indoor exposure
-
-Open **Indoor Lab**, select **Use hourly Delhi forecast**, and choose **Compare settings**. The chart compares the selected room with the same room closed and unfiltered. Expand **Hourly values** for concentrations in µg/m³. The dose summary above the chart is the estimated mass inhaled over the whole scenario, in µg.
-
-![Indoor Lab showing the eight-hour dose comparison and hourly concentration chart](docs/screenshots/indoor-lab.png)
-
-### 4. Compare a commute
-
-Open **Commute**, choose the current and alternative modes, enter a one-way distance and select **Compare trips**. Expand **Calculation and source** to see the factors behind the estimate. The example compares a petrol hatchback with a city bus over 10 km for one traveller.
-
-![Commute comparison with estimated grams of CO₂ per traveller and linked emission factors](docs/screenshots/commute.png)
-
-### 5. Ask a sourced question
-
-Open **Ask Saathi** and try **“How do I choose a purifier CADR?”** The response includes the source used for the answer. Switch to Hindi and try **“फ़िल्टर कब बदलें?”** An unrelated question exercises the insufficient-evidence response.
-
-![Ask Saathi answering a purifier-sizing question with a link to its source](docs/screenshots/ask-saathi.png)
-
-### 6. View and share weekly progress
-
-Open **Community** to see the household’s last seven days. Enter a locality and choose **Show digest**. A real locality summary appears after at least five distinct households have completed actions; each modeled impact total also needs five contributing households. On a fresh install, **View fictional example → Share summary** lets you try sharing immediately. The example stays separate from real totals.
-
-![Community screen showing private weekly progress and an explicitly fictional, shareable locality summary](docs/screenshots/community.png)
-
-## Data modes and optional services
-
-Edit the relevant settings in `.env`, then run `docker compose up -d --wait` to apply them.
+Air-data settings and AI settings are independent. Configure them in the private `.env` file and apply changes with `docker compose up -d --wait`.
 
 | Setting | Behavior |
 |---|---|
-| `DATA_MODE=fixture` | Reproducible synthetic air and weather data used throughout the walkthrough. |
-| `DATA_MODE=replay` | Archived Delhi model data from January 2025 with source and retrieval details. |
-| `DATA_MODE=live` | Fetches regional air and weather from Open-Meteo. An optional `OPENAQ_API_KEY` enables nearby station observations. The first live request may return 503 while the cache fills. |
-| `LLM_MODE=reference` or `replay` | Runs Ask Saathi and plan selection using reviewed content or bundled selection fixtures. |
-| `LLM_MODE=live` | Requires a server-side `GEMINI_API_KEY` and supported `GEMINI_MODEL`. Optional pgvector retrieval also requires an embedding model and index preparation. |
+| `DATA_MODE=fixture` | Bundled synthetic air and weather series for reproducible local use |
+| `DATA_MODE=replay` | Archived Delhi model data from January 2025, with source metadata |
+| `DATA_MODE=live` | Regional CAMS air-quality and weather feeds through Open-Meteo; an optional `OPENAQ_API_KEY` enables nearby station readings |
+| `LLM_MODE=reference` | Reviewed passage lookup and catalogue ordering without AI-provider calls |
+| `LLM_MODE=replay` | Bundled deterministic selection fixtures, with reference fallback |
+| `LLM_MODE=live` | Optional Gemini selection using a server-side `GEMINI_API_KEY` and configured `GEMINI_MODEL` |
 
-[Provider configuration and index preparation](docs/data-and-api.md#ask-saathi-and-plan-selection) · [Offline phone demo, school-run groups and optional Telegram delivery](RELEASE.md) · [Privacy and security](SECURITY.md)
+On `main`, Gemini can order eligible action IDs and select reviewed passage IDs. Optional embeddings add semantic retrieval through pgvector. Answer text, source URLs, action eligibility, and calculation results remain controlled by the application. Invalid or unavailable provider responses retain the reference behavior.
 
-## Development and tests
+Live chat questions are sent to Google; users should leave out personal details. See the [AI configuration and index preparation reference](docs/data-and-api.md#ask-saathi-and-plan-selection) for environment variables and optional retrieval setup.
 
-For frontend changes, keep the Compose stack running. In another terminal, use Node 22.12+ and start Vite on **5174** so it can proxy API calls to the backend on port 8000 while the production dashboard stays on 5173.
+## Model assumptions and privacy
+
+- **Air-quality scope:** the app covers a Delhi region. Its PM2.5 sub-index describes one pollutant component, rather than the official multi-pollutant overall AQI. Regional model values can differ from nearby station observations.
+- **Indoor estimates:** the model assumes one well-mixed room at hourly equilibrium. Indoor sources such as cooking are excluded, and default air-exchange and breathing rates are illustrative.
+- **Commute estimates:** comparisons use published operating emission factors and scenario assumptions. They are not a full vehicle lifecycle assessment.
+- **Action progress:** completion records participation. Exposure and CO₂ figures are modeled comparisons, not measured savings.
+- **Access and privacy:** anonymous bearer tokens identify households; the database stores token digests. Coordinates are rounded to two decimal places, and locality summaries require at least five contributing households.
+
+Calculation methods, data sources, API examples, and configuration details are documented in [docs/data-and-api.md](docs/data-and-api.md). Security information is available in [SECURITY.md](SECURITY.md).
+
+## Development
+
+Run backend checks from the repository root with Python 3.12. Activate a virtual environment, then install the development dependencies:
+
+```sh
+python -m pip install -r backend/requirements-dev.txt
+python -m unittest discover -s backend/tests -v
+```
+
+Database integration tests require `TEST_DATABASE_URL` pointing to a disposable PostgreSQL database. The pgvector check also requires the vector extension.
+
+For frontend development, keep the Compose stack running and start Vite on a separate port:
 
 ```sh
 cd frontend
@@ -115,19 +146,6 @@ npm ci
 npm run dev -- --port 5174
 ```
 
-Open [the development dashboard](http://localhost:5174). A different browser origin has its own anonymous household token. Use `npm run build` in `frontend/` to check the production bundle.
+Use [localhost:5174](http://localhost:5174) for development and `npm run build` for the production bundle. On Windows, `npm.cmd` can be used when PowerShell blocks `npm.ps1`.
 
-For backend tests, start at the repository root with Python 3.12:
-
-```sh
-python -m venv .venv
-```
-
-Activate with `.\.venv\Scripts\Activate.ps1` in PowerShell or `source .venv/bin/activate` in bash/zsh, then run:
-
-```sh
-python -m pip install -r backend/requirements-dev.txt
-python -m unittest discover -s backend/tests -v
-```
-
-Database integration tests require `TEST_DATABASE_URL` pointing to a **disposable** PostgreSQL database. The pgvector integration test also needs the extension available. CI provisions the database, applies migrations, checks persistence across a restart, builds the dashboard and exercises the mobile flow in Chrome. See the [verification and demo guide](RELEASE.md) and [CI workflow](.github/workflows/check.yml).
+The [CI workflow](.github/workflows/check.yml) checks backend behavior, database migrations and persistence, Docker startup, engine coverage, and mobile browser flows. [Dependency advisories](.github/workflows/dependency-review.yml) run separately on a schedule.
