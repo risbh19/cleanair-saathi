@@ -100,6 +100,11 @@ docker compose ps
 
 The services bind to the local machine. Run `docker compose down` to stop the stack while retaining its database volume, or `docker compose up -d --wait` to resume it. The default fixture setup needs no external API keys after the images have been built.
 
+For a public HTTPS deployment, the root `Dockerfile` serves the dashboard and
+`/api` from one service with an external persistent PostgreSQL database. The
+included Free Render Blueprint, environment settings, startup migrations and
+hosted verification steps are covered in [Public deployment](docs/deployment.md).
+
 ## AI and data modes
 
 Air-data settings and AI settings are independent. Configure them in the private `.env` file and apply changes with `docker compose up -d --wait`.

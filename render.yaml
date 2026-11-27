@@ -1,0 +1,20 @@
+# One public service. Supply an existing persistent PostgreSQL URL privately.
+# No paid database, disk, worker, or additional service is provisioned here.
+services:
+  - type: web
+    name: cleanair-saathi
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health/ready
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATA_MODE
+        value: live
+      - key: LLM_MODE
+        value: reference
+      - key: GRAP_ADMIN_TOKEN
+        generateValue: true
