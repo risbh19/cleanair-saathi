@@ -42,7 +42,11 @@ limits = RequestLimits()
 
 
 async def limit_expensive_routes(request: Request, call_next):
-    if request.url.path in {"/plan/today", "/chat"} and request.method in {"GET", "POST"}:
+    path = request.scope["path"]
+    root = request.scope.get("root_path", "")
+    if root and path.startswith(root + "/"):
+        path = path[len(root):]
+    if path in {"/plan/today", "/chat"} and request.method in {"GET", "POST"}:
         if not limits.allow(request.client.host if request.client else "unknown", monotonic()):
             return JSONResponse({"detail": "Please try again in a minute"}, status_code=429,
                                 headers={"Retry-After": "60", "Cache-Control": "no-store"})
